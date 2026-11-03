@@ -1,0 +1,56 @@
+{
+  "name": "aurora-feras",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Aurora: Caçadores de Feras — RPG de captura de criaturas original",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "author": "Pedro",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check-maps": "vite-node scripts/check-maps.ts",
+    "app": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win portable nsis",
+    "android:sync": "npm run build && npx cap sync android"
+  },
+  "build": {
+    "appId": "com.pedro.aurorferas",
+    "productName": "Aurora Feras",
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Aurora Feras"
+    },
+    "portable": {
+      "artifactName": "AuroraFeras-portatil.exe"
+    }
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "electron": "^45.2.2",
+    "electron-builder": "^26.18.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-node": "^6.0.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@fontsource/pixelify-sans": "^5.3.0"
+  },
+  "allowScripts": {
+    "electron@45.2.2": true
+  }
+}

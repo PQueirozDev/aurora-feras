@@ -1,0 +1,6 @@
+{
+  "appId": "com.pedro.aurorferas",
+  "appName": "Aurora Feras",
+  "webDir": "dist",
+  "android": { "backgroundColor": "#101018" }
+}
