@@ -113,6 +113,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     });
     this.refresh();
     S.mapa = id; S.x = x; S.y = y; S.dir = dir;
+    if (this.map.cidade) S.flags['visit_' + id] = true;
     audio.music(this.map.musica);
     this.namePopup = this.map.interior ? 0 : 120;
   }
@@ -546,6 +547,21 @@ export class WorldScene extends Scene<void> implements WorldAPI {
   wait(frames: number) { return wait(frames); }
   music(name: string | null) { audio.music(name); }
   jingle(name: string) { return audio.jingle(name); }
+  battleWild(sp: string, lvl: number) { return WorldScene.hooks.battleWild!(sp, lvl).then(async (r) => { await this.afterBattle(r, false); return r; }); }
+  async shake(frames = 20) { await wait(frames); }
+  async flash(_color = '#fff') { await fadeOut(6, _color); await fadeIn(6); }
+  insignias() { return ['insignia_rocha', 'insignia_mare', 'insignia_volt', 'insignia_bruma'].filter((f) => S.flags[f]).length; }
+  async credits() {
+    await say('Parabéns! Você se tornou o CAMPEÃO da Liga Aurora!', 'Obrigado por jogar Aurora: Caçadores de Feras!');
+    await this.warp('casa1', 5, 4, 'down');
+  }
+  async travel() {
+    const cidades = Object.entries(MAPS).filter(([id, m]) => m.cidade && S.flags['visit_' + id]);
+    const r = await choose(null, [...cidades.map(([, m]) => m.cidade!.nome.toUpperCase()), 'CANCELAR']);
+    if (r < 0 || r >= cidades.length) return;
+    const [id, m] = cidades[r];
+    await this.warp(id, m.cidade!.x, m.cidade!.y, 'down');
+  }
   pos(): { x: number; y: number; dir: Dir } { return { x: this.player.x, y: this.player.y, dir: this.player.dir }; }
 }
 

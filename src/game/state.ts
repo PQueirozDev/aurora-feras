@@ -20,6 +20,9 @@ export type GameState = {
   insignias: string[];
   ultimaCura: { mapa: string; x: number; y: number };
   tempo: number; // segundos jogados
+  repelente?: number; // passos restantes
+  opcoes?: { texto: 'normal' | 'rapido' };
+  hallDaFama?: { equipe: { sp: string; nivel: number; nome: string }[]; tempo: number }[];
   inicial?: string;
 };
 
@@ -86,5 +89,10 @@ export function removeItem(id: string, n = 1) {
   S.bolsa[id] = (S.bolsa[id] ?? 0) - n;
   if (S.bolsa[id] <= 0) delete S.bolsa[id];
 }
+/** fera inicial escolhida pelo jogador (lida das flags) */
+export function inicialJogador(): string | undefined {
+  return S.inicial ?? Object.keys(S.flags).find((k) => k.startsWith('inicial_'))?.slice(8);
+}
+
 export function marcarVisto(sp: string) { if (!S.vistos.includes(sp)) S.vistos.push(sp); }
 export function marcarCapturado(sp: string) { marcarVisto(sp); if (!S.capturados.includes(sp)) S.capturados.push(sp); }

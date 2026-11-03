@@ -3,7 +3,9 @@ import { makeCanvas, shade } from './pixel';
 export const TS = 16;
 
 /** Tiles: caractere -> propriedades */
-export const SOLID = new Set(['T', '~', 'f', 'S', 'R', 'B', 'O', 'Y', 'C', 'M', 'W', 'w', 'r', '#', 'c', 'p', 'h', 'b', 't', 'k', 'x', 'v', '0', 'q', 'X', 'Q']);
+export { SOLID } from './solid';
+import { SOLID } from './solid';
+void SOLID;
 export const OUTDOOR_GROUND = '.';
 
 function rnd(x: number, y: number, k = 0) {
@@ -300,6 +302,100 @@ function gymFloor(c: CanvasRenderingContext2D, X: number, Y: number, tx: number,
   if (rnd(tx, ty) > 0.6) px(c, X + 5, Y + 6, 3, 2, '#9a9080');
 }
 
+
+// ---------- novos terrenos ----------
+function caveFloor(c: CanvasRenderingContext2D, X: number, Y: number, tx: number, ty: number) {
+  px(c, X, Y, 16, 16, '#8a7a68');
+  for (let i = 0; i < 4; i++) px(c, X + Math.floor(rnd(tx, ty, i) * 14), Y + Math.floor(rnd(tx, ty, i + 7) * 14), 2, 1, '#766654');
+  if (rnd(tx, ty, 31) > 0.8) px(c, X + 5, Y + 9, 2, 2, '#a08e7a');
+}
+function caveWall(c: CanvasRenderingContext2D, X: number, Y: number, get: Get, tx: number, ty: number) {
+  const below = get(tx, ty + 1);
+  px(c, X, Y, 16, 16, '#4a3c34');
+  if (below !== 'K' && below !== '') {
+    // face da parede voltada para o jogador
+    px(c, X, Y + 6, 16, 10, '#6a5848');
+    px(c, X, Y + 6, 16, 1, '#7c6a58');
+    px(c, X + 3, Y + 9, 4, 2, '#5a4a3c'); px(c, X + 10, Y + 12, 3, 2, '#5a4a3c');
+    px(c, X, Y + 15, 16, 1, '#3a2e28');
+  } else {
+    px(c, X + Math.floor(rnd(tx, ty) * 10), Y + 4, 4, 2, '#5a4a40');
+  }
+}
+function lava(c: CanvasRenderingContext2D, X: number, Y: number, tx: number, ty: number, frame: number) {
+  px(c, X, Y, 16, 16, '#d84820');
+  const o = (frame + tx * 3 + ty) % 4;
+  px(c, X + 2 + o, Y + 3, 5, 2, '#f89838'); px(c, X + 9 - o, Y + 10, 5, 2, '#f8c048');
+  px(c, X + 4, Y + 12 - (o % 2), 2, 1, '#f8e070');
+}
+function mountain(c: CanvasRenderingContext2D, X: number, Y: number, get: Get, tx: number, ty: number) {
+  px(c, X, Y, 16, 16, '#a08060');
+  px(c, X, Y, 16, 3, '#b89878');
+  px(c, X + 2 + Math.floor(rnd(tx, ty) * 8), Y + 6, 5, 2, '#886848');
+  px(c, X + 1, Y + 11, 4, 2, '#886848');
+  if (get(tx, ty + 1) !== 'A') { px(c, X, Y + 13, 16, 3, '#6a5038'); }
+  if (get(tx, ty - 1) !== 'A') px(c, X, Y, 16, 1, '#d0b898');
+}
+function caveEntrance(c: CanvasRenderingContext2D, X: number, Y: number) {
+  px(c, X, Y, 16, 16, '#a08060');
+  px(c, X + 2, Y + 3, 12, 13, '#201814');
+  px(c, X + 3, Y + 2, 10, 1, '#201814');
+  px(c, X + 4, Y + 4, 8, 12, '#100c0a');
+}
+function sand(c: CanvasRenderingContext2D, X: number, Y: number, tx: number, ty: number) {
+  px(c, X, Y, 16, 16, '#f0dca0');
+  for (let i = 0; i < 5; i++) px(c, X + Math.floor(rnd(tx, ty, i) * 15), Y + Math.floor(rnd(tx, ty, i + 3) * 15), 1, 1, '#d8c080');
+}
+function pier(c: CanvasRenderingContext2D, X: number, Y: number, get: Get, tx: number, ty: number, frame: number) {
+  if (get(tx, ty - 1) === '~' || get(tx, ty + 1) === '~' || get(tx - 1, ty) === '~' || get(tx + 1, ty) === '~') water(c, X, Y, tx, ty, () => '~', frame);
+  const horiz = get(tx - 1, ty) === '=' || get(tx + 1, ty) === '=';
+  if (horiz) {
+    px(c, X, Y + 2, 16, 12, '#b07838');
+    for (let i = 0; i < 4; i++) px(c, X + i * 4 + 3, Y + 2, 1, 12, '#7a5020');
+    px(c, X, Y + 13, 16, 1, '#6a4018');
+  } else {
+    px(c, X + 2, Y, 12, 16, '#b07838');
+    for (let i = 0; i < 4; i++) px(c, X + 2, Y + i * 4 + 3, 12, 1, '#7a5020');
+  }
+}
+function metalFloor(c: CanvasRenderingContext2D, X: number, Y: number) {
+  px(c, X, Y, 16, 16, '#9098a8');
+  px(c, X, Y, 16, 1, '#b0b8c8'); px(c, X, Y, 1, 16, '#b0b8c8');
+  px(c, X + 15, Y, 1, 16, '#707888'); px(c, X, Y + 15, 16, 1, '#707888');
+  px(c, X + 3, Y + 3, 1, 1, '#6a7280'); px(c, X + 12, Y + 3, 1, 1, '#6a7280'); px(c, X + 3, Y + 12, 1, 1, '#6a7280'); px(c, X + 12, Y + 12, 1, 1, '#6a7280');
+}
+function generator(c: CanvasRenderingContext2D, X: number, Y: number, frame: number) {
+  metalFloor(c, X, Y);
+  px(c, X + 1, Y + 1, 14, 14, '#485060');
+  px(c, X + 2, Y + 2, 12, 5, '#303844');
+  px(c, X + 3, Y + 3, 10, 3, frame % 2 ? '#f8e048' : '#c8b030');
+  px(c, X + 3, Y + 9, 3, 3, '#e04848'); px(c, X + 8, Y + 9, 3, 3, '#48c868');
+}
+function carpet(c: CanvasRenderingContext2D, X: number, Y: number, get: Get, tx: number, ty: number) {
+  px(c, X, Y, 16, 16, '#7848a8');
+  if (get(tx - 1, ty) !== 'j') px(c, X, Y, 2, 16, '#e0b848');
+  if (get(tx + 1, ty) !== 'j') px(c, X + 14, Y, 2, 16, '#e0b848');
+  px(c, X + 7, Y + 6, 2, 4, '#9868c8');
+}
+function pillar(c: CanvasRenderingContext2D, X: number, Y: number) {
+  px(c, X, Y, 16, 16, '#282038');
+  px(c, X + 3, Y, 10, 16, '#d8d0e0');
+  px(c, X + 3, Y, 2, 16, '#f0ecf8');
+  px(c, X + 11, Y, 2, 16, '#a8a0b8');
+  px(c, X + 2, Y + 13, 12, 3, '#b8b0c8');
+}
+function darkFloor(c: CanvasRenderingContext2D, X: number, Y: number, tx: number, ty: number) {
+  px(c, X, Y, 16, 16, '#383048');
+  if ((tx + ty) % 2) px(c, X, Y, 16, 16, '#40384f');
+}
+function boat(c: CanvasRenderingContext2D, X: number, Y: number, get: Get, tx: number, ty: number, frame: number) {
+  water(c, X, Y, tx, ty, () => '~', frame);
+  const l = get(tx - 1, ty) !== 'n', r = get(tx + 1, ty) !== 'n';
+  px(c, X + (l ? 3 : 0), Y + 6, 16 - (l ? 3 : 0) - (r ? 3 : 0), 8, '#f0f0f0');
+  px(c, X + (l ? 4 : 0), Y + 11, 16 - (l ? 5 : 0) - (r ? 5 : 0), 3, '#3868b8');
+  if (!l && !r) px(c, X + 7, Y, 2, 7, '#7a5020');
+}
+
 export function paintTile(c: CanvasRenderingContext2D, ch: string, X: number, Y: number, tx: number, ty: number, get: Get, frame = 0) {
   switch (ch) {
     case '.': grass(c, X, Y, tx, ty); break;
@@ -322,8 +418,21 @@ export function paintTile(c: CanvasRenderingContext2D, ch: string, X: number, Y:
     case 'Q': gymFloor(c, X, Y, tx, ty); rockOn(c, X, Y); break;
     case 'c': case 'p': case 'h': case 'b': case 't': case 'k': case 'x': case 'v': case 'q':
       furniture(c, X, Y, ch, tx, ty, get, frame); break;
+    case ':': caveFloor(c, X, Y, tx, ty); break;
+    case 'K': caveWall(c, X, Y, get, tx, ty); break;
+    case 'l': lava(c, X, Y, tx, ty, frame); break;
+    case 'A': mountain(c, X, Y, get, tx, ty); break;
+    case 'E': caveEntrance(c, X, Y); break;
+    case ';': sand(c, X, Y, tx, ty); break;
+    case '=': pier(c, X, Y, get, tx, ty, frame); break;
+    case 'i': metalFloor(c, X, Y); break;
+    case 'e': generator(c, X, Y, frame); break;
+    case 'j': carpet(c, X, Y, get, tx, ty); break;
+    case 'J': pillar(c, X, Y); break;
+    case 'd': darkFloor(c, X, Y, tx, ty); break;
+    case 'n': boat(c, X, Y, get, tx, ty, frame); break;
     case '0': default: px(c, X, Y, 16, 16, '#000000');
   }
 }
 
-export const ANIMATED = new Set(['~', '*', 'p', 'v']);
+export const ANIMATED = new Set(['~', '*', 'p', 'v', 'l', 'e', '=', 'n']);

@@ -3,7 +3,7 @@ import { SPECIES, type Aparencia, type Detalhe } from '../data/species';
 
 export const SPR = 48;
 type Pt = [number, number];
-type Anchors = { headTop: Pt; ears: [Pt, Pt]; tail: Pt; eyes: [Pt, Pt]; mouth: Pt | null; back?: Pt };
+type Anchors = { headTop: Pt; ears: [Pt, Pt]; tail: Pt; eyes: [Pt, Pt]; mouth: Pt | null; back?: Pt; hands?: [Pt, Pt]; sides?: [Pt, Pt] };
 
 const FLAME = '#f86830';
 const LEAF = '#48b048';
@@ -38,6 +38,12 @@ function draw(look: Aparencia, back: boolean): PixelGrid {
     }
     if (has('caudaRaio')) {
       P([[tx - 2, ty + 2], [tx + 5, ty - 3], [tx + 3, ty - 6], [tx + 10, ty - 13], [tx + 13, ty - 11], [tx + 8, ty - 6], [tx + 11, ty - 3], [tx + 1, ty + 4]], shade(c1, -0.1));
+    }
+    if (has('asasMorcego')) {
+      const [[lx, ly], [rx, ry]] = a.sides ?? [[a.ears[0][0] - 4, a.ears[0][1] + 12], [a.ears[1][0] + 4, a.ears[1][1] + 12]];
+      const wc = shade(c1, -0.35);
+      P([[lx + 2, ly - 6], [lx - 10, ly - 12], [lx - 14, ly + 2], [lx - 10, ly - 1], [lx - 8, ly + 5], [lx - 4, ly + 1], [lx + 2, ly + 5]], wc);
+      P([[rx - 2, ry - 6], [rx + 10, ry - 12], [rx + 14, ry + 2], [rx + 10, ry - 1], [rx + 8, ry + 5], [rx + 4, ry + 1], [rx - 2, ry + 5]], wc);
     }
     if (has('orelhas')) {
       for (const [ex, ey] of a.ears) {
@@ -76,6 +82,17 @@ function draw(look: Aparencia, back: boolean): PixelGrid {
         E(hx + sx * 8.5, hy - 9, 2, 2, c3, false);
       }
     }
+    if (has('chapeu')) {
+      E(hx, hy - 1, 17, 8, c3);
+      if (!back) { E(hx - 7, hy - 4, 2.5, 2, '#fff8f0', false); E(hx + 5, hy - 5, 3, 2.5, '#fff8f0', false); E(hx + 11, hy, 2, 1.5, '#fff8f0', false); E(hx - 1, hy + 1, 2, 1.5, '#fff8f0', false); }
+    }
+    if (has('coroa')) {
+      for (let i = -1; i <= 1; i++) P([[hx + i * 4 - 2, hy + 3], [hx + i * 4, hy - 5 - (i === 0 ? 3 : 0)], [hx + i * 4 + 2, hy + 3]], '#f8d048');
+    }
+    if (has('joia') && !back) { E(hx, hy + 6, 2.2, 2.2, c3, false); R(hx - 1, hy + 5, 1, 1, '#ffffff'); }
+    if (has('punhos') && a.hands) {
+      for (const [px, py] of a.hands) E(px, py, 5, 5, c3);
+    }
     if (has('espinhos')) {
       const [bx, by] = a.back ?? a.headTop;
       for (let i = -1; i <= 1; i++) P([[bx + i * 7 - 3, by + 3], [bx + i * 7, by - 5], [bx + i * 7 + 3, by + 3]], c3);
@@ -104,13 +121,14 @@ function draw(look: Aparencia, back: boolean): PixelGrid {
     if (a.mouth) {
       const [mx, my] = T(a.mouth[0], a.mouth[1]);
       g.rect(Math.round(mx) - 1, Math.round(my), 3, 1, shade(c1, -0.6));
+      if (has('presas')) { g.set(Math.round(mx) - 2, Math.round(my) + 1, '#ffffff'); g.set(Math.round(mx) + 2, Math.round(my) + 1, '#ffffff'); }
     }
   };
 
   let a: Anchors;
   switch (look.corpo) {
     case 'bipede':
-      a = { headTop: [24, 8], ears: [[16, 10], [32, 10]], tail: [34, 38], eyes: [[19, 17], [29, 17]], mouth: [24, 22] };
+      a = { headTop: [24, 8], ears: [[16, 10], [32, 10]], tail: [34, 38], eyes: [[19, 17], [29, 17]], mouth: [24, 22], hands: [[11, 34], [37, 34]], sides: [[14, 28], [34, 28]] };
       behind(a);
       E(17, 43, 5, 3, d1); E(31, 43, 5, 3, d1);
       E(24, 33, 11, 11, c1);
@@ -128,7 +146,7 @@ function draw(look: Aparencia, back: boolean): PixelGrid {
       if (!back) E(9, 26, 4, 3, c2);
       break;
     case 'redondo':
-      a = { headTop: [24, 16], ears: [[17, 19], [31, 19]], tail: [37, 37], eyes: [[18, 27], [30, 27]], mouth: [24, 32] };
+      a = { headTop: [24, 16], ears: [[17, 19], [31, 19]], tail: [37, 37], eyes: [[18, 27], [30, 27]], mouth: [24, 32], hands: [[9, 35], [39, 35]], sides: [[11, 28], [37, 28]] };
       behind(a);
       E(16, 43, 5, 3, d1); E(32, 43, 5, 3, d1);
       E(24, 30, 15, 14, c1);
@@ -170,6 +188,24 @@ function draw(look: Aparencia, back: boolean): PixelGrid {
       E(24, 30, 4, 11, '#584868');
       E(24, 16, 6, 6, shade(c1, -0.35));
       break;
+    case 'serpente':
+      a = { headTop: [16, 11], ears: [[12, 13], [20, 13]], tail: [40, 38], eyes: [[12, 17], [19, 17]], mouth: [11, 22] };
+      E(28, 39, 15, 6, c1);
+      P([[40, 38], [47, 34], [44, 40]], d1);
+      E(27, 33, 11, 5, c1);
+      if (!back) E(27, 34, 7, 2, c2, false);
+      E(19, 26, 5, 8, c1);
+      if (!back) E(18, 27, 2.5, 6, c2, false);
+      if (has('coroa')) { E(16, 20, 13, 9, shade(c1, -0.15)); if (!back) E(16, 21, 9, 6, c2, false); }
+      E(16, 18, 9, 7, c1);
+      break;
+    case 'fantasma':
+      a = { headTop: [24, 9], ears: [[16, 12], [32, 12]], tail: [24, 42], eyes: [[18, 21], [30, 21]], mouth: [24, 28] };
+      E(8, 27, 4, 3, c1); E(40, 27, 4, 3, c1);
+      P([[10, 25], [38, 25], [37, 38], [32, 34], [28, 43], [23, 36], [18, 42], [13, 35]], c1);
+      E(24, 23, 14, 14, c1);
+      if (!back) E(24, 27, 8, 7, c2);
+      break;
     case 'pedra':
     default:
       a = { headTop: [24, 11], ears: [[16, 14], [32, 14]], tail: [40, 36], eyes: [[18, 25], [30, 25]], mouth: [24, 31], back: [24, 12] };
@@ -184,6 +220,13 @@ function draw(look: Aparencia, back: boolean): PixelGrid {
   front(a);
   eyes(a);
   g.outline(shade(c1, -0.7));
+  if (has('aura')) {
+    const pts: Pt[] = [[5, 8], [42, 6], [3, 30], [45, 26], [9, 44], [40, 43], [24, 2]];
+    for (const [x, y] of pts) {
+      if (g.get(x, y)) continue;
+      g.set(x, y, '#ffffff'); g.set(x - 1, y, c3); g.set(x + 1, y, c3); g.set(x, y - 1, c3); g.set(x, y + 1, c3);
+    }
+  }
   return back ? g.mirror() : g;
 }
 
