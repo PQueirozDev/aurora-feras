@@ -46,6 +46,7 @@ class PartyScene extends Scene<number> {
     if (it.tipo === 'cura') return m.hp > 0 && m.hp < maxHp(m);
     if (it.tipo === 'status') return m.hp > 0 && !!m.status && (it.curaStatus === 'all' || it.curaStatus === m.status);
     if (it.tipo === 'reviver') return m.hp <= 0;
+    if (it.tipo === 'pp') return m.golpes.some((g) => g.pp < move(g.id).pp);
     return false;
   }
   update() {
@@ -206,6 +207,15 @@ class BagScene extends Scene<string | null> {
     const r = await choose(null, ['USAR', 'CANCELAR']);
     if (r !== 0) return;
     if (it.tipo === 'captura') { await say('Não dá para usar isso agora.'); return; }
+    if (it.tipo === 'chave') { await say(it.desc); return; }
+    if (it.tipo === 'repelente') {
+      if ((S.repelente ?? 0) > 0) { await say('Ainda há repelente fazendo efeito.'); return; }
+      removeItem(id);
+      S.repelente = it.passos ?? 100;
+      audio.sfx('heal');
+      await say(`{nome} usou ${it.nome}. As feras selvagens vão ficar longe por ${S.repelente} passos.`);
+      return;
+    }
     if (!S.equipe.length) { await say('Você não tem feras.'); return; }
     const alvo = await openParty('item', id);
     if (alvo < 0) return;
@@ -222,6 +232,9 @@ class BagScene extends Scene<string | null> {
     } else if (it.tipo === 'reviver') {
       m.hp = Math.floor(maxHp(m) / 2);
       await say(`${nomeDe(m)} foi reanimado!`);
+    } else if (it.tipo === 'pp') {
+      for (const g of m.golpes) g.pp = Math.min(move(g.id).pp, g.pp + 10);
+      await say(`Os PP de ${nomeDe(m)} foram recuperados!`);
     }
   }
   draw() {
@@ -307,24 +320,35 @@ class CardScene extends Scene<void> {
   update() { if (input.pressed('a') || input.pressed('b')) { audio.sfx('blip'); this.finish(); } }
   draw() {
     bg('#88a8d8', '#7898c8');
-    box(10, 14, W - 20, 132);
-    text('CARTÃO DE TREINADOR', W / 2, 22, { size: 11, bold: true, align: 'center' });
+    box(10, 8, W - 20, 144);
+    text('CARTÃO DE TREINADOR', W / 2, 15, { size: 11, bold: true, align: 'center' });
     const h = Math.floor(S.tempo / 3600), mi = Math.floor((S.tempo % 3600) / 60);
+    const ins = INSIGNIAS.filter((b) => S.flags[b.flag]).length;
     const rows: [string, string][] = [
-      ['Nome', S.nome], ['Dinheiro', `$${S.dinheiro}`], ['Feradex', `${S.capturados.length} capturadas`],
-      ['Tempo', `${h}:${String(mi).padStart(2, '0')}`], ['Insígnias', `${S.insignias.length + (S.flags.insignia_rocha ? 1 : 0)}`],
+      ['Nome', S.nome], ['Dinheiro', `$${S.dinheiro}`], ['Feradex', `${S.capturados.length}/41`],
+      ['Tempo', `${h}:${String(mi).padStart(2, '0')}`], ['Insígnias', `${ins}/4`],
     ];
-    rows.forEach(([k, v], i) => { text(k, 24, 42 + i * 16, { size: 10 }); text(v, 160, 42 + i * 16, { size: 10, align: 'right' }); });
-    // insígnia
-    rect(178, 46, 44, 44, '#d8d8e0');
-    if (S.flags.insignia_rocha) {
-      ctx.fillStyle = '#a89878';
-      ctx.beginPath(); ctx.moveTo(200, 52); ctx.lineTo(214, 66); ctx.lineTo(206, 84); ctx.lineTo(194, 84); ctx.lineTo(186, 66); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#d8c8a8'; ctx.fillRect(196, 60, 6, 6);
-    }
-    text('ROCHA', 200, 94, { size: 8, align: 'center' });
+    rows.forEach(([k, v], i) => { text(k, 24, 32 + i * 14, { size: 10 }); text(v, 132, 32 + i * 14, { size: 10, align: 'right' }); });
+    if (S.flags.campeao) text('★ CAMPEÃO DE AURORA ★', 182, 36, { size: 8, align: 'center', color: '#c89018', shadow: null, bold: true });
+    INSIGNIAS.forEach((b, i) => {
+      const x = 24 + i * 50, y = 108;
+      rect(x, y, 36, 36, '#d8d8e0');
+      if (S.flags[b.flag]) {
+        ctx.fillStyle = b.cor;
+        ctx.beginPath(); ctx.moveTo(x + 18, y + 4); ctx.lineTo(x + 32, y + 16); ctx.lineTo(x + 26, y + 32); ctx.lineTo(x + 10, y + 32); ctx.lineTo(x + 4, y + 16); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(x + 14, y + 12, 5, 5);
+      }
+      text(b.nome, x + 18, y + 37, { size: 7, align: 'center', shadow: null });
+    });
   }
 }
+
+const INSIGNIAS = [
+  { flag: 'insignia_rocha', nome: 'ROCHA', cor: '#a89878' },
+  { flag: 'insignia_mare', nome: 'MARÉ', cor: '#5898e0' },
+  { flag: 'insignia_volt', nome: 'VOLT', cor: '#f0c830' },
+  { flag: 'insignia_bruma', nome: 'BRUMA', cor: '#8868b8' },
+];
 
 // ======================= LOJA =======================
 class QtyScene extends Scene<number> {
@@ -491,9 +515,11 @@ export async function openPC() {
 async function openOptions() {
   for (;;) {
     const fs = !!document.fullscreenElement;
-    const r = await choose(null, [`SOM: ${S.flags.semSom ? 'DESLIGADO' : 'LIGADO'}`, `TELA CHEIA: ${fs ? 'SIM' : 'NÃO'}`, 'VOLTAR']);
-    if (r === 0) { S.flags.semSom = !S.flags.semSom; audio.setEnabled(!S.flags.semSom); }
-    else if (r === 1) {
+    const rapido = S.opcoes?.texto === 'rapido';
+    const r = await choose(null, [`TEXTO: ${rapido ? 'RÁPIDO' : 'NORMAL'}`, `TELA CHEIA: ${fs ? 'SIM' : 'NÃO'}`, 'VOLTAR']);
+    if (r === 0) { S.opcoes = { texto: rapido ? 'normal' : 'rapido' }; continue; }
+    if (r === 2 || r < 0) break;
+    if (r === 1) {
       try {
         if (fs) await document.exitFullscreen();
         else await document.documentElement.requestFullscreen();

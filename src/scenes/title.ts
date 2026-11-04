@@ -208,6 +208,6 @@ export class TitleScene extends Scene<void> {
         if (i === this.idx) cursor(82, 79 + i * 16);
       });
     }
-    text('v0.1', W - 4, H - 10, { size: 8, align: 'right', color: '#8898c8', shadow: null });
+    text('v1.0', W - 4, H - 10, { size: 8, align: 'right', color: '#8898c8', shadow: null });
   }
 }

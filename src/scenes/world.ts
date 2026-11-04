@@ -12,6 +12,8 @@ import { item } from '../data/items';
 import { say, ask, choose, fadeOut, fadeIn } from '../game/game';
 import { fmt } from './dialog';
 import { box } from '../ui/draw';
+import { creatureSprites } from '../gfx/creatures';
+import { CreditsScene } from './credits';
 
 const DX: Record<Dir, number> = { up: 0, down: 0, left: -1, right: 1 };
 const DY: Record<Dir, number> = { up: -1, down: 1, left: 0, right: 0 };
@@ -108,6 +110,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     Object.assign(this.player, { x, y, fx: x, fy: y, prog: 1, moving: false, dir, queue: [] });
     this.npcs = this.map.npcs.map((n) => {
       const a = mkActor(n.id, n.x, n.y, n.dir, n.look, n.obj === 'capsula');
+      if (n.obj === 'fera' && n.sp) a.obj = creatureSprites(n.sp).front;
       a.def = n;
       return a;
     });
@@ -164,6 +167,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     a.jump = jump;
     a.stepCount++;
     if (jump) audio.sfx('bump');
+    if (a === this.player && this.tileAt(nx, ny) === '"') this.puff(nx, ny, 'grama');
     return true;
   }
 
@@ -183,6 +187,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
       a.prog = Math.min(1, a.prog + sp);
       if (a.prog >= 1) {
         a.moving = false;
+        if (a.jump && a === this.player) this.puff(a.x, a.y, 'poeira');
         a.jump = false;
         if (a === this.player) this.onPlayerStepEnd();
       }
@@ -237,10 +242,15 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     // treinadores
     if (await this.checkTrainers()) return;
     // grama alta
-    if (ch === '"') {
-      audio.sfx('grass');
+    if (S.repelente && S.repelente > 0) {
+      S.repelente--;
+      if (S.repelente === 0) { this.busy = true; await say('O efeito do repelente acabou.'); this.busy = false; }
+    }
+    if (ch === '"' || (this.map.caverna && ch === ':')) {
+      if (ch === '"') audio.sfx('grass');
       const enc = this.map.encontros;
-      if (enc && S.equipe.some((m) => m.hp > 0) && Math.random() * 100 < enc.taxa) {
+      const repel = (S.repelente ?? 0) > 0;
+      if (enc && !repel && S.equipe.some((m) => m.hp > 0) && Math.random() * 100 < enc.taxa) {
         const total = enc.lista.reduce((s, e) => s + e[3], 0);
         let r = Math.random() * total;
         let pick = enc.lista[0];
@@ -340,6 +350,9 @@ export class WorldScene extends Scene<void> implements WorldAPI {
   // ---------------- loop ----------------
   update() {
     this.t++;
+    if (this.shakeT > 0) this.shakeT--;
+    for (const pt of this.parts) { pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.08; pt.life--; }
+    this.parts = this.parts.filter((pt) => pt.life > 0);
     if (this.t % 30 === 0) this.repaintAnimated();
     if (this.namePopup > 0) this.namePopup--;
     if (this.emoteOn && --this.emoteOn.t <= 0) this.emoteOn = null;
@@ -406,8 +419,9 @@ export class WorldScene extends Scene<void> implements WorldAPI {
 
   draw() {
     const [ppx, ppy] = this.actorPos(this.player);
-    const camX = Math.round(ppx + 8 - W / 2);
-    const camY = Math.round(ppy + 8 - H / 2);
+    const sh = this.shakeT > 0 ? Math.round((Math.random() - 0.5) * 6) : 0;
+    const camX = Math.round(ppx + 8 - W / 2) + sh;
+    const camY = Math.round(ppy + 8 - H / 2) + (this.shakeT > 0 ? Math.round((Math.random() - 0.5) * 3) : 0);
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, W, H);
     // borda
@@ -426,7 +440,17 @@ export class WorldScene extends Scene<void> implements WorldAPI {
       const [x, y, lift] = this.actorPos(a);
       const sx = Math.round(x - camX), sy = Math.round(y - camY);
       if (sx < -16 || sy < -24 || sx > W || sy > H + 8) continue;
-      if (a.obj) { ctx.drawImage(a.obj, sx + 2, sy + 2); continue; }
+      if (a.obj && a.obj.width > 16) {
+        // fera lendária no mapa: flutua e brilha
+        const bob = Math.round(Math.sin(this.t / 15) * 2);
+        ctx.globalAlpha = 0.25 + Math.sin(this.t / 10) * 0.1;
+        ctx.fillStyle = '#c8f8f0';
+        ctx.beginPath(); ctx.ellipse(sx + 8, sy + 10, 20, 6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.drawImage(a.obj, sx - 16, sy - 30 + bob);
+        continue;
+      }
+      if (a.obj) { ctx.drawImage(a.obj, sx + 2, sy + 2 + (Math.floor(this.t / 40) % 2)); continue; }
       if (!a.sprites) continue;
       // sombra
       if (a.jump) { ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(sx + 3, sy + 12, 10, 3); }
@@ -441,6 +465,23 @@ export class WorldScene extends Scene<void> implements WorldAPI {
       const tx = Math.round(x / TS), ty = Math.round(y / TS);
       if (!a.moving && this.tileAt(tx, ty) === '"') ctx.drawImage(tallGrassOverlay, sx, sy + 8);
       else if (a.moving && a.prog > 0.5 && this.tileAt(a.x, a.y) === '"') ctx.drawImage(tallGrassOverlay, sx, sy + 8);
+    }
+    // partículas (grama / poeira)
+    for (const pt of this.parts) {
+      ctx.globalAlpha = Math.min(1, pt.life / 10);
+      ctx.fillStyle = pt.c;
+      ctx.fillRect(Math.round(pt.x - camX), Math.round(pt.y - camY), 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    // escuridão de caverna: só a área em volta do jogador fica visível
+    if (this.map.escuro) {
+      const cxp = ppx + 8 - camX, cyp = ppy + 4 - camY;
+      const raio = 44 + Math.sin(this.t / 20) * 2;
+      const g = ctx.createRadialGradient(cxp, cyp, raio * 0.45, cxp, cyp, raio);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(4,2,10,0.94)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
     }
     // emote "!"
     if (this.emoteOn) {
@@ -543,17 +584,38 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     await fadeOut(12);
     this.loadMap(map, x, y, dir);
     await fadeIn(12);
+    if (this.map.aoEntrar) await this.map.aoEntrar(this);
   }
   wait(frames: number) { return wait(frames); }
   music(name: string | null) { audio.music(name); }
   jingle(name: string) { return audio.jingle(name); }
   battleWild(sp: string, lvl: number) { return WorldScene.hooks.battleWild!(sp, lvl).then(async (r) => { await this.afterBattle(r, false); return r; }); }
-  async shake(frames = 20) { await wait(frames); }
+  async shake(frames = 20) { this.shakeT = frames; audio.sfx('superhit'); await wait(frames); }
+  private shakeT = 0;
+  private parts: { x: number; y: number; vx: number; vy: number; life: number; c: string }[] = [];
+  private puff(tx: number, ty: number, tipo: 'grama' | 'poeira') {
+    for (let i = 0; i < 6; i++) {
+      this.parts.push({
+        x: tx * TS + 8 + (Math.random() - 0.5) * 10, y: ty * TS + 12,
+        vx: (Math.random() - 0.5) * 1.2, vy: -Math.random() * 1.4 - 0.4, life: 18 + Math.random() * 8,
+        c: tipo === 'grama' ? (Math.random() < 0.5 ? '#48a848' : '#78c860') : '#d8c8a0',
+      });
+    }
+  }
   async flash(_color = '#fff') { await fadeOut(6, _color); await fadeIn(6); }
   insignias() { return ['insignia_rocha', 'insignia_mare', 'insignia_volt', 'insignia_bruma'].filter((f) => S.flags[f]).length; }
   async credits() {
-    await say('Parabéns! Você se tornou o CAMPEÃO da Liga Aurora!', 'Obrigado por jogar Aurora: Caçadores de Feras!');
-    await this.warp('casa1', 5, 4, 'down');
+    await fadeOut(40, '#fff');
+    S.hallDaFama = [...(S.hallDaFama ?? []), { equipe: S.equipe.map((m) => ({ sp: m.sp, nivel: m.nivel, nome: nomeDe(m) })), tempo: S.tempo }];
+    const creditos = stack.push(new CreditsScene());
+    await fadeIn(30);
+    await creditos;
+    await fadeOut(30);
+    this.loadMap('casa1', 5, 4, 'down');
+    S.equipe.forEach(curarTotal);
+    S.ultimaCura = { mapa: 'casa1', x: 5, y: 4 };
+    await fadeIn(40);
+    await say('Mãe: {nome}! Que bom que voltou! Toda a vila está falando do novo campeão de Aurora!', 'Mãe: Dizem que algo brilha no alto da caverna da Vila Neblina... Mas descanse um pouco antes, viu?');
   }
   async travel() {
     const cidades = Object.entries(MAPS).filter(([id, m]) => m.cidade && S.flags['visit_' + id]);

@@ -13,9 +13,10 @@ import { efetividade, TIPO_COR, type Tipo } from '../data/types';
 import { item } from '../data/items';
 import type { TrainerDef } from '../data/maps';
 import { fmt } from './dialog';
-import { choose } from '../game/game';
+import { choose, ask } from '../game/game';
 import { openParty, openBag } from './menus';
 import { EvolutionScene } from './evolution';
+import { Fx } from './battlefx';
 
 export type BattleResult = 'win' | 'lose' | 'run' | 'caught';
 
@@ -60,13 +61,17 @@ export class BattleScene extends Scene<BattleResult> {
   private outcome: BattleResult = 'win';
   private evolucoes = new Set<number>();
   private ballSpr = capsuleSprite(undefined, 10);
+  private fx = new Fx();
+  private grow: Record<Side, number> = { p: 1, f: 1 };
+  private vsT = 0;
+  private centro(s: Side): [number, number] { return s === 'f' ? [176, 40] : [64, 90]; }
 
   constructor(private opts: { wild?: { sp: string; lvl: number }; trainer?: TrainerDef; musica?: string }) {
     super();
     if (opts.wild) this.foe = [criarMon(opts.wild.sp, opts.wild.lvl)];
     else this.foe = opts.trainer!.equipe.map(([sp, lv]) => criarMon(sp, lv));
     if (opts.trainer) {
-      const look = LOOKS[guessLook(opts.trainer)] ?? LOOKS.garoto;
+      const look = LOOKS[opts.trainer.look ?? guessLook(opts.trainer)] ?? LOOKS.garoto;
       this.trainerSpr = personSprites(look).down[0];
     }
   }
@@ -136,7 +141,13 @@ export class BattleScene extends Scene<BattleResult> {
 
   update() {
     this.t++;
-    for (const s of ['p', 'f'] as Side[]) { if (this.blink[s] > 0) this.blink[s]--; if (this.flash[s] > 0) this.flash[s]--; }
+    for (const s of ['p', 'f'] as Side[]) {
+      if (this.blink[s] > 0) this.blink[s]--;
+      if (this.flash[s] > 0) this.flash[s]--;
+      if (this.grow[s] < 1) this.grow[s] = Math.min(1, this.grow[s] + 1 / 12);
+    }
+    if (this.vsT > 0) this.vsT--;
+    this.fx.update();
     if (this.waiter && this.waiter.update()) {
       this.waiter = null;
       const r = this.resolveWaiter; this.resolveWaiter = null;
@@ -162,6 +173,7 @@ export class BattleScene extends Scene<BattleResult> {
       await this.msg(`Um ${nomeDe(this.F.m)} selvagem apareceu!`);
     } else {
       const tr = this.opts.trainer!;
+      if (tr.lider || tr.chefe) { this.vsT = 90; await this.frames(90); }
       this.trainerX = 260;
       await this.frames(30, (i) => (this.trainerX = Math.round(260 - (260 - 172) * ((i + 1) / 30))));
       await this.msg(`${tr.classe} ${tr.nome} quer lutar!`);
@@ -192,7 +204,10 @@ export class BattleScene extends Scene<BattleResult> {
     this.sink[s] = 0;
     this.off[s] = [0, 0];
     this.flash[s] = 14;
+    this.grow[s] = 0;
     audio.sfx('throw');
+    const [cx, cy] = this.centro(s);
+    this.fx.brilho(cx, cy + 10, '#ffffff');
     await this.frames(18);
   }
 
@@ -230,6 +245,7 @@ export class BattleScene extends Scene<BattleResult> {
         const id = await openBag('batalha');
         if (!id) continue;
         const it = item(id);
+        if (it.tipo === 'chave' || it.tipo === 'repelente') { await this.msg('Não dá para usar isso em batalha!'); continue; }
         if (it.tipo === 'captura') {
           if (this.opts.trainer) { await this.msg('Não dá para capturar a fera de outro treinador!'); continue; }
           return { k: 'item', id };
@@ -401,7 +417,7 @@ export class BattleScene extends Scene<BattleResult> {
     await this.msg(`${an} usou ${mv.nome}!`);
 
     // precisão
-    const alvoEhOutro = !(mv.cat === 'status' && mv.ef && ((mv.ef.k === 'stat' && mv.ef.alvo === 'self') || mv.ef.k === 'heal'));
+    const alvoEhOutro = !(mv.cat === 'status' && mv.ef && ((mv.ef.k === 'stat' && mv.ef.alvo === 'self') || mv.ef.k === 'stat2' || mv.ef.k === 'heal'));
     if (alvoEhOutro && mv.prec > 0 && Math.random() * 100 >= mv.prec) {
       await this.msg(`${an} errou o ataque!`);
       return undefined;
@@ -413,9 +429,13 @@ export class BattleScene extends Scene<BattleResult> {
       await this.frames(10, (i) => (this.off[s] = [dir * (i < 5 ? i * 2 : (10 - i) * 2), 0]));
       this.off[s] = [0, 0];
       const eff = efetividade(mv.tipo, species(D.m).tipos);
+      if (eff === 0) { await this.msg(`Não afeta ${dn}...`); return undefined; }
+      const [fxX, fxY] = this.centro(ds);
+      await this.frames(this.fx.golpe(mv.tipo, fxX, fxY));
       const critChance = mv.ef?.k === 'crit' ? 0.25 : 1 / 16;
       const crit = Math.random() < critChance;
-      const dmg = this.damage(A, D, mv, eff, crit);
+      const dmg = mv.ef?.k === 'fixo' ? A.m.nivel : this.damage(A, D, mv, eff, crit);
+      this.fx.shake(eff > 1 || crit ? 14 : 8, eff > 1 || crit ? 4 : 2);
       audio.sfx(eff > 1 ? 'superhit' : eff < 1 ? 'weak' : 'hit');
       this.blink[ds] = 16;
       const dealt = Math.min(D.m.hp, dmg);
@@ -459,13 +479,17 @@ export class BattleScene extends Scene<BattleResult> {
 
     // golpes de status
     const ef = mv.ef!;
-    if (ef.k === 'stat') await this.changeStat(ef.alvo === 'self' ? A : D, ef.alvo === 'self' ? s : ds, ef.stat, ef.n);
+    const alvoSelf = (ef.k === 'stat' && ef.alvo === 'self') || ef.k === 'stat2' || ef.k === 'heal';
+    if (!alvoSelf) { const [fx2, fy2] = this.centro(ds); await this.frames(Math.min(30, this.fx.golpe(mv.tipo, fx2, fy2))); }
+    if (ef.k === 'stat2') { for (const st of ef.stats) await this.changeStat(A, s, st, ef.n); }
+    else if (ef.k === 'stat') await this.changeStat(ef.alvo === 'self' ? A : D, ef.alvo === 'self' ? s : ds, ef.stat, ef.n);
     else if (ef.k === 'status') await this.tryStatus(D, ds, ef.s, false);
     else if (ef.k === 'heal') {
       if (A.m.hp >= maxHp(A.m)) await this.msg('Mas os PV já estão cheios!');
       else {
         A.m.hp = Math.min(maxHp(A.m), A.m.hp + Math.floor(maxHp(A.m) / 2));
         audio.sfx('heal');
+        const [hx, hy] = this.centro(s); this.fx.brilho(hx, hy);
         await this.animHp();
         await this.msg(`${an} recuperou energia!`);
       }
@@ -512,6 +536,9 @@ export class BattleScene extends Scene<BattleResult> {
     if (b.st[stat] === before) { await this.msg(`${STAT_NOME[stat]} de ${nome} não pode ${n > 0 ? 'subir' : 'cair'} mais!`); return; }
     this.flash[side] = 12;
     audio.sfx(n > 0 ? 'heal' : 'weak');
+    const [sx, sy] = this.centro(side);
+    this.fx.setas(sx, sy, n > 0);
+    await this.frames(20);
     const muito = Math.abs(n) >= 2 ? ' muito' : '';
     await this.msg(`${STAT_NOME[stat]} de ${nome}${muito} ${n > 0 ? 'aumentou' : 'diminuiu'}!`);
   }
@@ -559,6 +586,14 @@ export class BattleScene extends Scene<BattleResult> {
     for (const m of vivos) {
       await this.msg(`${nomeDe(m)} ganhou ${cada} pontos de experiência!`);
       await this.addXp(m, cada);
+    }
+    if (S.flags.compartilhador) {
+      const resto = S.equipe.filter((m) => m.hp > 0 && !this.participantes.has(m.uid));
+      if (resto.length) {
+        const metade = Math.max(1, Math.floor(base / 2 / resto.length));
+        await this.msg(`O resto da equipe ganhou ${metade} pontos de experiência pelo Compartilhador XP!`);
+        for (const m of resto) await this.addXp(m, metade);
+      }
     }
   }
 
@@ -643,10 +678,18 @@ export class BattleScene extends Scene<BattleResult> {
       await this.frames(10);
     }
     if (pego) {
+      this.fx.estrelas(this.ball.x + 5, this.ball.y);
       await audio.jingle('captura');
       await this.msg(`Peguei! ${nomeDe(m)} foi capturado!`, true);
       m.dono = S.nome;
+      const novo = !S.capturados.includes(m.sp);
       marcarCapturado(m.sp);
+      if (novo) await this.msg(`Os dados de ${nomeDe(m)} foram registrados na Feradex!`, true);
+      if (await ask(`Quer dar um apelido para ${nomeDe(m)}?`)) {
+        const { NamingScene } = await import('./title');
+        const ap = await stack.push(new NamingScene(`Apelido para ${nomeDe(m)}?`, nomeDe(m), 'player'));
+        if (ap && ap !== nomeDe(m)) m.apelido = ap;
+      }
       if (S.equipe.length < 6) S.equipe.push(m);
       else { S.caixa.push(m); await this.msg(`A equipe está cheia. ${nomeDe(m)} foi enviado para o computador.`, true); }
       this.ball = null;
@@ -680,7 +723,12 @@ export class BattleScene extends Scene<BattleResult> {
       m.hp = Math.floor(maxHp(m) / 2);
       audio.sfx('heal');
       await this.msg(`${nomeDe(m)} foi reanimado!`);
+    } else if (it.tipo === 'pp') {
+      for (const g of m.golpes) g.pp = Math.min(move(g.id).pp, g.pp + 10);
+      audio.sfx('heal');
+      await this.msg(`Os PP de ${nomeDe(m)} foram recuperados!`);
     }
+    if (isActive) { const [hx, hy] = this.centro('p'); this.fx.brilho(hx, hy); }
   }
 
   // ===================== fim =====================
@@ -711,11 +759,19 @@ export class BattleScene extends Scene<BattleResult> {
 
   // ===================== desenho =====================
   draw() {
+    const [shx, shy] = this.fx.offset();
+    ctx.save();
+    ctx.translate(shx, shy);
     // fundo
-    rect(0, 0, W, H, '#f8f0d8');
+    rect(-4, -4, W + 8, H + 8, '#f8f0d8');
     const sky = ctx.createLinearGradient(0, 0, 0, 112);
-    sky.addColorStop(0, '#c8e8f8'); sky.addColorStop(1, '#f0f8e0');
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, 112);
+    const lider = this.opts.trainer?.lider || this.opts.trainer?.chefe;
+    sky.addColorStop(0, lider ? '#d8c8f0' : '#c8e8f8'); sky.addColorStop(1, lider ? '#f8e8f0' : '#f0f8e0');
+    ctx.fillStyle = sky; ctx.fillRect(-4, -4, W + 8, 116);
+    // nuvens ao fundo
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (let i = 0; i < 3; i++) { const cx = ((this.t * 0.15 + i * 90) % (W + 60)) - 30; ctx.fillRect(Math.round(cx), 14 + i * 9, 26, 4); ctx.fillRect(Math.round(cx) + 5, 11 + i * 9, 14, 3); }
+    this.fx.drawBack();
     // plataformas
     ellipse(176, 62, 44, 9, '#a8c878'); ellipse(176, 61, 40, 7, '#c0dc90');
     ellipse(64, 110, 52, 10, '#a8c878'); ellipse(64, 109, 48, 8, '#c0dc90');
@@ -734,6 +790,8 @@ export class BattleScene extends Scene<BattleResult> {
       if (this.ball.open) { ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(bx - 6, by - 6, 22, 22); }
       ctx.drawImage(this.ballSpr, bx, by);
     }
+    this.fx.draw();
+    ctx.restore();
     // caixas de info
     if (this.F && this.intro >= 99 && (this.vis.f || this.ball)) this.drawFoeBox();
     if (this.P && this.vis.p) this.drawPlayerBox();
@@ -773,6 +831,8 @@ export class BattleScene extends Scene<BattleResult> {
     }
     this.waiter?.draw?.();
 
+    // apresentação de líder / chefe
+    if (this.vsT > 0) this.drawVs();
     // transição de entrada
     if (this.intro < 99) {
       const i = this.intro;
@@ -808,9 +868,38 @@ export class BattleScene extends Scene<BattleResult> {
       ctx.drawImage(spr, 0, 0, 48, visH, px, py + 48 - visH, 48, visH);
       return;
     }
-    const scale = s === 'p' ? 1 : 1;
-    ctx.drawImage(spr, px, py, 48 * scale, 48 * scale);
+    const bob = this.uiMode !== 'none' ? Math.round(Math.sin(this.t / (s === 'p' ? 14 : 18)) * 1) : 0;
+    const g = this.grow[s];
+    if (g < 1) {
+      const e = 1 - Math.pow(1 - g, 3);
+      const w = Math.max(1, Math.round(48 * e));
+      ctx.drawImage(silhouette(spr, '#ffffff'), px + (48 - w) / 2, py + 48 - w, w, w);
+      return;
+    }
+    ctx.drawImage(spr, px, py + bob, 48, 48);
     if (this.flash[s] > 0 && this.flash[s] % 4 < 2) ctx.drawImage(silhouette(spr, 'rgba(255,255,255,0.85)'), px, py);
+  }
+
+  private drawVs() {
+    const tr = this.opts.trainer!;
+    const k = this.vsT > 75 ? (90 - this.vsT) / 15 : this.vsT < 12 ? this.vsT / 12 : 1;
+    ctx.fillStyle = 'rgba(16,10,32,0.85)';
+    ctx.fillRect(0, 0, W, H);
+    const bandH = Math.round(70 * k);
+    const g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, tr.chefe ? '#5a1838' : '#283c88'); g.addColorStop(1, tr.chefe ? '#a83858' : '#4878d8');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 80 - bandH / 2, W, bandH);
+    // listras animadas
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    for (let i = 0; i < 8; i++) { const x = ((this.t * 4 + i * 40) % (W + 40)) - 40; ctx.fillRect(x, 80 - bandH / 2, 14, bandH); }
+    if (k >= 1 && this.trainerSpr) {
+      const slide = Math.max(0, (this.vsT - 60) * 6);
+      ctx.drawImage(this.trainerSpr, 24 - slide, 56, 48, 48);
+      text(tr.classe.toUpperCase(), 92 + slide, 60, { size: 10, color: '#f8d048', shadow: '#201030', bold: true });
+      text(fmt(tr.nome), 92 + slide, 74, { size: 18, color: '#ffffff', shadow: '#201030', bold: true });
+      text('VS', W - 34, 62, { size: 22, color: '#f8f8f8', shadow: '#e04848', bold: true });
+    }
   }
 
   private drawFoeBox() {

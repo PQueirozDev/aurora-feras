@@ -30,7 +30,7 @@ export class Dialog extends Scene<void> {
   update() {
     this.t++;
     if (this.chars < this.total) {
-      this.chars += input.held('a') || input.held('b') ? 4 : 1.5;
+      this.chars += input.held('a') || input.held('b') ? 4 : S.opcoes?.texto === 'rapido' ? 3.5 : 1.5;
       if (input.pressed('a') || input.pressed('b')) this.chars = this.total;
       return;
     }
