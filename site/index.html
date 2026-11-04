@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aurora: Caçadores de Feras · RPG em pixel art grátis para PC</title>
+  <meta name="description" content="RPG de captura de criaturas em pixel art, 100% original e grátis. 41 feras, 4 ginásios, a Liga Aurora e uma história completa. Jogue no navegador ou baixe para Windows." />
+  <meta name="theme-color" content="#181818" />
+  <link rel="icon" type="image/png" href="img/icon.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Aurora: Caçadores de Feras" />
+  <meta property="og:description" content="Capture, treine e conquiste a Liga Aurora. RPG em pixel art original e grátis." />
+  <meta property="og:image" content="img/batalha.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preload" href="fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+    {"@type":"Question","name":"O jogo é grátis?","acceptedAnswer":{"@type":"Answer","text":"Sim. Aurora é gratuito, sem anúncios e sem compras dentro do jogo."}},
+    {"@type":"Question","name":"Preciso instalar alguma coisa?","acceptedAnswer":{"@type":"Answer","text":"Não. Você pode jogar direto no navegador. Se preferir, baixe a versão para Windows."}},
+    {"@type":"Question","name":"Funciona no celular?","acceptedAnswer":{"@type":"Answer","text":"Sim, pelo navegador do celular, com direcional e botões na tela. O aplicativo Android está a caminho."}}
+  ]}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="nav-wrap">
+    <nav class="nav" aria-label="Principal">
+      <a class="brand" href="#topo" aria-current="page"><img src="img/icon.png" alt="" width="24" height="24" /> Aurora</a>
+      <ul class="nav-links">
+        <li><a href="#recursos">O jogo</a></li>
+        <li><a href="#jogar">Jogar agora</a></li>
+        <li><a href="#feras">Feras</a></li>
+        <li><a href="#faq">Dúvidas</a></li>
+      </ul>
+      <a class="btn btn-sm btn-primary nav-cta" href="#baixar">Baixar</a>
+      <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-mobile">
+        <span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <div class="menu-mobile" id="menu-mobile" hidden>
+    <ul>
+      <li><a href="#recursos">O jogo</a></li>
+      <li><a href="#jogar">Jogar agora</a></li>
+      <li><a href="#feras">Feras</a></li>
+      <li><a href="#faq">Dúvidas</a></li>
+      <li><a href="#baixar">Baixar</a></li>
+    </ul>
+  </div>
+
+  <main id="conteudo">
+    <!-- HERO -->
+    <section class="hero" id="topo">
+      <div class="hero-text">
+        <p class="eyebrow">RPG em pixel art · 100% original</p>
+        <h1 class="grad">Capture, treine <br />e conquiste a <br />Liga Aurora</h1>
+        <p class="sub">Uma aventura completa com 41 feras inéditas, quatro ginásios e a Equipe Eclipse no seu caminho. Grátis no PC e direto no navegador.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#baixar"><svg class="ic"><use href="icons.svg#windows-logo" /></svg> Baixar para Windows</a>
+          <a class="link" href="#jogar">Jogar no navegador <svg class="ic"><use href="icons.svg#arrow-right" /></svg></a>
+        </div>
+        <ul class="proof">
+          <li><strong>41</strong> feras</li>
+          <li><strong>42</strong> mapas</li>
+          <li><strong>13</strong> tipos</li>
+          <li>Sem anúncios</li>
+        </ul>
+      </div>
+      <figure class="hero-shot reveal">
+        <img class="px" src="img/batalha.png" width="960" height="640" alt="Batalha: Fornalhão usa Roda de Fogo contra um Cogumelinho selvagem" />
+      </figure>
+    </section>
+
+    <!-- TAGLINE -->
+    <section class="tagline" aria-label="Destaque">
+      <p class="tagline-text" data-words>Nenhuma fera copiada de outro jogo. Cada criatura, mapa e batalha foi criada do zero para Aurora.</p>
+    </section>
+
+    <!-- RECURSOS -->
+    <section class="section" id="recursos">
+      <div class="section-head reveal">
+        <h2>Tudo o que um RPG de captura precisa</h2>
+        <p>Do primeiro passo na grama alta até a sala do campeão, são horas de jogo com começo, meio e fim.</p>
+      </div>
+      <div class="features">
+        <article class="feature reveal">
+          <img class="px" src="img/vs.png" width="960" height="640" loading="lazy" alt="Apresentação do Admin Corvo da Equipe Eclipse antes da batalha" />
+          <div class="feature-body">
+            <svg class="ic ic-lg"><use href="icons.svg#sword" /></svg>
+            <h3>Batalhas com estratégia de verdade</h3>
+            <p>13 tipos com vantagens e fraquezas, 80 golpes, estados como sono e veneno, e efeitos animados para cada tipo.</p>
+          </div>
+        </article>
+        <article class="feature reveal">
+          <img class="px" src="img/bosque.png" width="960" height="640" loading="lazy" alt="Jogador explorando o Bosque Sussurro" />
+          <div class="feature-body">
+            <svg class="ic ic-lg"><use href="icons.svg#map-trifold" /></svg>
+            <h3>Uma região inteira para explorar</h3>
+            <p>Cinco cidades, rotas com grama alta, um bosque labiríntico, uma caverna de lava e a Estrada da Vitória.</p>
+          </div>
+        </article>
+        <article class="feature reveal">
+          <img class="px" src="img/caverna.png" width="960" height="640" loading="lazy" alt="Caverna Brasa escura iluminada só ao redor do jogador" />
+          <div class="feature-body">
+            <svg class="ic ic-lg"><use href="icons.svg#sparkle" /></svg>
+            <h3>História com vilões e uma lenda</h3>
+            <p>Enfrente a Equipe Eclipse, desafie seu rival quatro vezes e encontre a fera lendária depois de virar campeão.</p>
+          </div>
+        </article>
+        <article class="feature reveal">
+          <img class="px" src="img/mundo.png" width="960" height="640" loading="lazy" alt="Cidade de Porto Maré vista de cima" />
+          <div class="feature-body">
+            <svg class="ic ic-lg"><use href="icons.svg#game-controller" /></svg>
+            <h3>Jogue do seu jeito</h3>
+            <p>Teclado, controle de Xbox ou PlayStation, ou toque na tela do celular. O progresso fica salvo no aparelho.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- DEMO -->
+    <section class="section" id="jogar">
+      <div class="section-head reveal">
+        <h2>Jogue agora, sem instalar nada</h2>
+        <p>A demonstração abaixo é o jogo completo rodando no seu navegador.</p>
+      </div>
+      <div class="demo reveal">
+        <div class="demo-frame" id="demo">
+          <button class="demo-start" id="demo-start">
+            <img class="px" src="img/titulo.png" width="960" height="640" alt="" />
+            <span class="btn btn-primary"><svg class="ic"><use href="icons.svg#play" /></svg> Começar a jogar</span>
+          </button>
+        </div>
+        <ul class="keys">
+          <li><kbd>Setas</kbd> andar</li>
+          <li><kbd>Z</kbd> confirmar</li>
+          <li><kbd>X</kbd> voltar e correr</li>
+          <li><kbd>Enter</kbd> menu</li>
+          <li><a class="link" href="jogar/" target="_blank" rel="noopener">Abrir em tela cheia <svg class="ic"><use href="icons.svg#arrow-right" /></svg></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- FERAS -->
+    <section class="section" id="feras">
+      <div class="section-head reveal">
+        <h2>Conheça as 41 feras de Aurora</h2>
+        <p>Todas desenhadas em pixel art, com evoluções, tipos e golpes próprios. Toque em uma para ver os detalhes.</p>
+      </div>
+      <div class="feras" id="lista-feras" aria-live="polite">
+        <div class="fera skeleton"></div><div class="fera skeleton"></div><div class="fera skeleton"></div><div class="fera skeleton"></div>
+        <div class="fera skeleton"></div><div class="fera skeleton"></div><div class="fera skeleton"></div><div class="fera skeleton"></div>
+      </div>
+    </section>
+
+    <!-- BAIXAR -->
+    <section class="section" id="baixar">
+      <div class="section-head reveal">
+        <h2>Baixe e jogue em três passos</h2>
+        <p>Grátis, sem cadastro e sem anúncios.</p>
+      </div>
+      <ol class="steps reveal">
+        <li><span class="step-n">1</span><div><h3>Baixe o instalador</h3><p>Escolha o instalador ou a versão portátil, que roda sem instalar.</p></div></li>
+        <li><span class="step-n">2</span><div><h3>Abra o arquivo</h3><p>Se o Windows mostrar um aviso, clique em Mais informações e depois em Executar assim mesmo.</p></div></li>
+        <li><span class="step-n">3</span><div><h3>Escolha sua fera</h3><p>Fale com o Prof. Ipê, escolha entre Brasilho, Pingolim e Folhito e comece a jornada.</p></div></li>
+      </ol>
+      <div class="downloads reveal">
+        <a class="dl" id="dl-setup" href="https://github.com/PQueirozDev/aurora-feras/releases/latest/download/AuroraFeras-Setup.exe">
+          <svg class="ic ic-lg"><use href="icons.svg#windows-logo" /></svg>
+          <span><strong>Windows (instalador)</strong><small>Cria atalho na área de trabalho · 116 MB</small></span>
+          <svg class="ic"><use href="icons.svg#download-simple" /></svg>
+        </a>
+        <a class="dl" href="https://github.com/PQueirozDev/aurora-feras/releases/latest/download/AuroraFeras-portatil.exe">
+          <svg class="ic ic-lg"><use href="icons.svg#desktop" /></svg>
+          <span><strong>Windows (portátil)</strong><small>Um único arquivo, roda sem instalar · 106 MB</small></span>
+          <svg class="ic"><use href="icons.svg#download-simple" /></svg>
+        </a>
+        <div class="dl is-disabled" aria-disabled="true">
+          <svg class="ic ic-lg"><use href="icons.svg#android-logo" /></svg>
+          <span><strong>Android</strong><small>Em breve. Por enquanto, jogue pelo navegador do celular.</small></span>
+          <svg class="ic"><use href="icons.svg#device-mobile" /></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="section-head reveal">
+        <h2>Dúvidas frequentes</h2>
+      </div>
+      <div class="faq reveal">
+        <details><summary>O jogo é grátis?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>Sim. Aurora é gratuito, sem anúncios e sem compras dentro do jogo.</p></details>
+        <details><summary>Preciso instalar alguma coisa?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>Não. Você pode jogar direto no navegador, logo acima. A versão para Windows existe para quem prefere um aplicativo com atalho e tela cheia.</p></details>
+        <details><summary>Funciona no celular?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>Sim, pelo navegador do celular. Aparecem um direcional e os botões A, B e Start na tela. O aplicativo Android está a caminho.</p></details>
+        <details><summary>Posso usar controle?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>Pode. Controles de Xbox e PlayStation são reconhecidos automaticamente, no navegador e no aplicativo.</p></details>
+        <details><summary>Onde fica salvo o meu progresso?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>No próprio aparelho, pelo menu Salvar. Nada é enviado para servidores.</p></details>
+        <details><summary>Quanto tempo leva para terminar?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>Algo entre 5 e 8 horas para chegar ao final, e mais um pouco para completar a Feradex e capturar a fera lendária.</p></details>
+        <details><summary>É um jogo de Pokémon?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>Não. Aurora é inspirado no gênero de RPGs de captura, mas todas as criaturas, personagens, mapas e a história são originais.</p></details>
+        <details><summary>O Windows avisou que o arquivo é desconhecido. É seguro?<svg class="ic"><use href="icons.svg#caret-down" /></svg></summary><p>O aviso aparece porque o instalador não tem assinatura digital paga. O código do jogo é aberto e pode ser conferido no GitHub.</p></details>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="final reveal">
+      <h2 class="grad">Sua jornada começa na Vila Orvalho</h2>
+      <p>Três feras esperam no laboratório do Prof. Ipê. Qual vai ser a sua?</p>
+      <div class="hero-cta center">
+        <a class="btn btn-primary" href="#baixar"><svg class="ic"><use href="icons.svg#windows-logo" /></svg> Baixar para Windows</a>
+        <a class="link" href="#jogar">Jogar no navegador <svg class="ic"><use href="icons.svg#arrow-right" /></svg></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Aurora: Caçadores de Feras · feito por <a href="https://portfolio-pqueirozdev.vercel.app" rel="noopener">Pedro Queiroz</a></p>
+    <ul>
+      <li><a href="https://github.com/PQueirozDev/aurora-feras" rel="noopener"><svg class="ic"><use href="icons.svg#github-logo" /></svg> Código no GitHub</a></li>
+      <li><a href="privacidade.html">Privacidade</a></li>
+      <li><a href="termos.html">Termos</a></li>
+    </ul>
+  </footer>
+
+  <dialog class="fera-modal" id="fera-modal" aria-labelledby="fm-nome">
+    <button class="fm-close" aria-label="Fechar"><svg class="ic"><use href="icons.svg#x" /></svg></button>
+    <img class="px" id="fm-img" src="" alt="" width="192" height="192" />
+    <p class="fm-id" id="fm-id"></p>
+    <h3 id="fm-nome"></h3>
+    <p class="fm-cat" id="fm-cat"></p>
+    <div class="fm-tipos" id="fm-tipos"></div>
+  </dialog>
+
+  <script src="main.js" defer></script>
+</body>
+</html>

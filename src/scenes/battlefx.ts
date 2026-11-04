@@ -33,18 +33,20 @@ export class Fx {
   golpe(tipo: Tipo, x: number, y: number): number {
     switch (tipo) {
       case 'Fogo':
-        for (let i = 0; i < 26; i++) this.add({ x: x + R(-16, 16), y: y + R(4, 18), vx: R(-0.3, 0.3), vy: R(-1.8, -0.8), max: R(18, 32), size: R(2, 4), color: pick(['#f86830', '#f8a838', '#f8e048', '#e84020']), life: -Math.floor(R(0, 10)) });
-        return 34;
+        for (let i = 0; i < 44; i++) this.add({ x: x + R(-20, 20), y: y + R(2, 22), vx: R(-0.4, 0.4), vy: R(-2.2, -0.9), max: R(18, 34), size: R(3, 7), color: pick(['#f86830', '#f8a838', '#f8e048', '#e84020', '#fff0a0']), life: -Math.floor(R(0, 12)) });
+        this.add({ kind: 'ring', x, y: y + 8, max: 20, size: 6, color: '#f8a838', life: -6 });
+        this.flash(3, 'rgba(255,160,60,0.35)');
+        return 36;
       case 'Água':
-        for (let i = 0; i < 22; i++) { const a = R(0, Math.PI * 2), v = R(1, 2.6); this.add({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, g: 0.12, max: R(18, 28), size: R(2, 3), color: pick(['#68a8f8', '#a8d8ff', '#ffffff']) }); }
+        for (let i = 0; i < 22; i++) { const a = R(0, Math.PI * 2), v = R(1, 2.6); this.add({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, g: 0.12, max: R(18, 28), size: R(3, 5), color: pick(['#68a8f8', '#a8d8ff', '#ffffff']) }); }
         this.add({ kind: 'ring', x, y, max: 18, size: 4, color: '#a8d8ff' });
         return 28;
       case 'Planta':
-        for (let i = 0; i < 12; i++) this.add({ kind: 'leaf', x, y, max: 30, size: 3, color: pick(['#58c048', '#88e068', '#3a9a38']), orbit: { cx: x, cy: y, r: R(18, 26), a: (i / 12) * Math.PI * 2, va: 0.18, vr: -0.7 } });
+        for (let i = 0; i < 18; i++) this.add({ kind: 'leaf', x, y, max: 30, size: 3, color: pick(['#58c048', '#88e068', '#3a9a38']), orbit: { cx: x, cy: y, r: R(18, 26), a: (i / 18) * Math.PI * 2, va: 0.18, vr: -0.7 } });
         return 32;
       case 'Elétrico':
         for (let i = 0; i < 3; i++) this.add({ kind: 'bolt', x: x + R(-14, 14), y: y - 40, x2: x + R(-6, 6), y2: y + 6, max: 14, size: 1, color: '#f8f070', life: -i * 5 });
-        for (let i = 0; i < 12; i++) { const a = R(0, Math.PI * 2); this.add({ x, y, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2, max: 14, size: 2, color: '#f8e048', life: -8 }); }
+        for (let i = 0; i < 12; i++) { const a = R(0, Math.PI * 2); this.add({ x, y, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2, max: 16, size: 3, color: '#f8e048', life: -8 }); }
         this.flash(5, 'rgba(255,250,180,0.6)');
         return 28;
       case 'Pedra':
@@ -52,11 +54,11 @@ export class Fx {
         this.shake(14, 3);
         return 30;
       case 'Terra':
-        for (let i = 0; i < 26; i++) { const a = R(Math.PI, Math.PI * 2); this.add({ x: x + R(-10, 10), y: y + 16, vx: Math.cos(a) * R(1, 2.5), vy: Math.sin(a) * R(1, 2), g: 0.1, max: 26, size: R(2, 4), color: pick(['#c8a060', '#a07840', '#e0c080']) }); }
+        for (let i = 0; i < 26; i++) { const a = R(Math.PI, Math.PI * 2); this.add({ x: x + R(-10, 10), y: y + 16, vx: Math.cos(a) * R(1, 2.5), vy: Math.sin(a) * R(1, 2), g: 0.1, max: 26, size: R(3, 6), color: pick(['#c8a060', '#a07840', '#e0c080']) }); }
         this.shake(26, 4);
         return 30;
       case 'Inseto':
-        for (let i = 0; i < 16; i++) { const a = R(0, Math.PI * 2), r = R(24, 34); this.add({ x: x + Math.cos(a) * r, y: y + Math.sin(a) * r, vx: -Math.cos(a) * r / 18, vy: -Math.sin(a) * r / 18, max: 18, size: 2, color: pick(['#a8c830', '#d8f060']) }); }
+        for (let i = 0; i < 16; i++) { const a = R(0, Math.PI * 2), r = R(24, 34); this.add({ x: x + Math.cos(a) * r, y: y + Math.sin(a) * r, vx: -Math.cos(a) * r / 18, vy: -Math.sin(a) * r / 18, max: 18, size: 3, color: pick(['#a8c830', '#d8f060']) }); }
         return 22;
       case 'Voador':
         for (let i = 0; i < 10; i++) this.add({ kind: 'line', x: x - 50 - R(0, 30), y: y + R(-18, 18), vx: R(5, 7), max: 20, size: R(10, 18), color: 'rgba(255,255,255,0.85)', life: -Math.floor(R(0, 8)) });
@@ -68,18 +70,18 @@ export class Fx {
         return 20;
       case 'Fantasma':
         this.darken = 40;
-        for (let i = 0; i < 8; i++) this.add({ x, y, max: 36, size: 4, color: pick(['#a878e8', '#7848b8', '#d8b8ff']), orbit: { cx: x, cy: y, r: 30, a: (i / 8) * Math.PI * 2, va: 0.12, vr: -0.8 } });
+        for (let i = 0; i < 8; i++) this.add({ x, y, max: 36, size: 6, color: pick(['#a878e8', '#7848b8', '#d8b8ff']), orbit: { cx: x, cy: y, r: 30, a: (i / 8) * Math.PI * 2, va: 0.12, vr: -0.8 } });
         return 38;
       case 'Psíquico':
         for (let i = 0; i < 4; i++) this.add({ kind: 'ring', x, y, max: 22, size: 3, color: pick(['#f878b8', '#f8a8d8']), life: -i * 5 });
         return 34;
       case 'Venenoso':
-        for (let i = 0; i < 16; i++) this.add({ kind: 'ring', x: x + R(-14, 14), y: y + R(0, 16), vy: R(-1, -0.4), max: R(18, 30), size: R(2, 4), color: pick(['#b058c8', '#d888e8', '#8838a0']), life: -Math.floor(R(0, 10)) });
+        for (let i = 0; i < 16; i++) this.add({ kind: 'ring', x: x + R(-14, 14), y: y + R(0, 16), vy: R(-1, -0.4), max: R(18, 30), size: R(3, 6), color: pick(['#b058c8', '#d888e8', '#8838a0']), life: -Math.floor(R(0, 10)) });
         return 32;
       case 'Normal':
       default:
-        this.add({ kind: 'star', x, y, max: 12, size: 14, color: '#ffffff' });
-        for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; this.add({ x, y, vx: Math.cos(a) * 2.2, vy: Math.sin(a) * 2.2, max: 12, size: 2, color: '#f8f0c0' }); }
+        this.add({ kind: 'star', x, y, max: 14, size: 18, color: '#ffffff' });
+        for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; this.add({ x, y, vx: Math.cos(a) * 2.2, vy: Math.sin(a) * 2.2, max: 14, size: 3, color: '#f8f0c0' }); }
         return 16;
     }
   }
@@ -137,7 +139,7 @@ export class Fx {
       switch (p.kind) {
         case 'dot': ctx.fillRect(x, y, Math.ceil(p.size), Math.ceil(p.size)); break;
         case 'rect': ctx.fillRect(x, y, p.size, p.size); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x, y + p.size - 1, p.size, 1); break;
-        case 'leaf': ctx.fillRect(x, y, 3, 2); ctx.fillRect(x + 1, y - 1, 1, 1); break;
+        case 'leaf': ctx.fillRect(x, y, 5, 3); ctx.fillRect(x + 1, y - 1, 3, 1); ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.fillRect(x, y + 2, 5, 1); break;
         case 'ring': {
           ctx.lineWidth = 1;
           ctx.beginPath(); ctx.arc(x, y, p.size + k * 22 * (p.vy ? 0.2 : 1), 0, Math.PI * 2); ctx.stroke();
