@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --ignore-scripts",
+  "buildCommand": "npm run site",
+  "outputDirectory": "site-dist",
+  "git": { "deploymentEnabled": { "gh-pages": false } },
+  "headers": [
+    { "source": "/downloads/(.*)", "headers": [{ "key": "Content-Disposition", "value": "attachment" }] }
+  ]
+}
