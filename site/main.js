@@ -1,58 +1,29 @@
-// Interações do site: menu, revelação ao rolar, frase animada, demo jogável e galeria de feras.
-const reduz = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// ---------- menu mobile ----------
-const toggle = document.querySelector('.menu-toggle');
-const menu = document.getElementById('menu-mobile');
-function setMenu(aberto) {
-  toggle.setAttribute('aria-expanded', String(aberto));
-  toggle.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
-  if (aberto) {
-    menu.hidden = false;
-    const links = [...menu.querySelectorAll('a')];
-    const passo = Math.min(60, 400 / links.length);
-    links.forEach((a, i) => { a.style.transitionDelay = `${i * passo}ms`; });
-    requestAnimationFrame(() => menu.classList.add('open'));
-    document.body.style.overflow = 'hidden';
-  } else {
-    menu.classList.remove('open');
-    document.body.style.overflow = '';
-    setTimeout(() => { if (!menu.classList.contains('open')) menu.hidden = true; }, 400);
-  }
-}
-toggle.addEventListener('click', () => setMenu(toggle.getAttribute('aria-expanded') !== 'true'));
-menu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') setMenu(false); });
+// Site do Aurora: revelação ao rolar, navegação ativa, demo jogável e Feradex.
 
 // ---------- revelação das seções (uma vez) ----------
+document.querySelectorAll('.section .sec-head, .cell, .shot, .stats, .demo, .dl-btns').forEach((el) => el.classList.add('reveal'));
 const io = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) { e.target.classList.add('visivel'); io.unobserve(e.target); }
-}, { threshold: 0.15 });
+}, { threshold: 0.12 });
 document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
-// ---------- frase de destaque: cada palavra acende ao cruzar a linha ----------
-const frase = document.querySelector('[data-words]');
-if (frase) {
-  frase.innerHTML = frase.textContent.trim().split(/\s+/).map((w) => `<span class="w">${w}</span>`).join(' ');
-  const palavras = [...frase.querySelectorAll('.w')];
-  if (reduz) palavras.forEach((w) => w.classList.add('on'));
-  else {
-    let pendente = false;
-    const atualizar = () => {
-      pendente = false;
-      const linha = window.innerHeight * 0.62;
-      palavras.forEach((w) => w.classList.toggle('on', w.getBoundingClientRect().top < linha));
-    };
-    const agendar = () => { if (!pendente) { pendente = true; requestAnimationFrame(atualizar); } };
-    window.addEventListener('scroll', agendar, { passive: true });
-    window.addEventListener('resize', agendar);
-    atualizar();
+// ---------- link da seção atual no topo ----------
+const links = [...document.querySelectorAll('.nav a')];
+const secoes = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const navIO = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    links.forEach((a) => {
+      const ativo = a.getAttribute('href') === '#' + e.target.id;
+      a.classList.toggle('on', ativo);
+      if (ativo) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
   }
-}
+}, { rootMargin: '-45% 0px -50% 0px' });
+secoes.forEach((s) => navIO.observe(s));
 
 // ---------- demo jogável (carrega só quando o visitante clica) ----------
-const start = document.getElementById('demo-start');
-start?.addEventListener('click', () => {
+document.getElementById('demo-start')?.addEventListener('click', () => {
   const frame = document.createElement('iframe');
   frame.src = 'jogar/';
   frame.title = 'Aurora: Caçadores de Feras, jogo completo';
@@ -61,40 +32,51 @@ start?.addEventListener('click', () => {
   frame.addEventListener('load', () => frame.focus());
 });
 
-// ---------- galeria de feras ----------
+// ---------- Feradex ----------
 const CORES = {
   Normal: '#8a8a5c', Fogo: '#d0601c', 'Água': '#4a72d8', Planta: '#4e9a30', 'Elétrico': '#b89400', Pedra: '#8e7a28',
   Inseto: '#7e8c16', Voador: '#7a62d8', Terra: '#a8843a', Lutador: '#a8281e', Fantasma: '#5a4680', 'Psíquico': '#d83a70', Venenoso: '#8a3088',
 };
-const tipoHTML = (t) => `<span class="tipo" style="background:${CORES[t] ?? '#555'}">${t}</span>`;
+const tipoEl = (t) => {
+  const s = document.createElement('span');
+  s.className = 'tipo';
+  s.style.background = CORES[t] ?? '#555';
+  s.textContent = t;
+  return s;
+};
+const num = (id) => 'Nº ' + String(id).padStart(3, '0');
 const lista = document.getElementById('lista-feras');
 const modal = document.getElementById('fera-modal');
 
 fetch('feras.json')
   .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
   .then((feras) => {
-    lista.innerHTML = feras.map((f) => `
-      <button class="fera${f.lendario ? ' lendaria' : ''}" data-k="${f.k}" aria-label="Ver ${f.nome}">
-        <img src="img/feras/${f.k}.png" alt="" width="96" height="96" loading="lazy" />
-        <span class="num">Nº ${String(f.id).padStart(3, '0')}</span>
-        <span class="nome">${f.nome}</span>
-        <span class="tipos">${f.tipos.map(tipoHTML).join('')}</span>
-      </button>`).join('');
-    lista.addEventListener('click', (e) => {
-      const b = e.target.closest('.fera');
-      if (!b) return;
-      const f = feras.find((x) => x.k === b.dataset.k);
-      document.getElementById('fm-img').src = `img/feras/${f.k}.png`;
-      document.getElementById('fm-img').alt = f.nome;
-      document.getElementById('fm-id').textContent = `Nº ${String(f.id).padStart(3, '0')}${f.lendario ? ' · Lendária' : ''}`;
-      document.getElementById('fm-nome').textContent = f.nome;
-      document.getElementById('fm-cat').textContent = f.cat;
-      document.getElementById('fm-tipos').innerHTML = f.tipos.map(tipoHTML).join('');
-      modal.showModal();
-    });
+    const frag = document.createDocumentFragment();
+    for (const f of feras) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fera' + (f.lendario ? ' lendaria' : '');
+      b.setAttribute('aria-label', 'Ver ' + f.nome);
+      const img = document.createElement('img');
+      img.src = `img/feras/${f.k}.png`; img.alt = ''; img.width = 88; img.height = 88; img.loading = 'lazy';
+      const n = document.createElement('span'); n.className = 'num'; n.textContent = num(f.id);
+      const nome = document.createElement('span'); nome.className = 'nome'; nome.textContent = f.nome;
+      const tipos = document.createElement('span'); tipos.className = 'tipos'; f.tipos.forEach((t) => tipos.append(tipoEl(t)));
+      b.append(img, n, nome, tipos);
+      b.addEventListener('click', () => {
+        const fm = document.getElementById('fm-img');
+        fm.src = `img/feras/${f.k}.png`; fm.alt = f.nome;
+        document.getElementById('fm-id').textContent = num(f.id) + (f.lendario ? ' · lendária' : '');
+        document.getElementById('fm-nome').textContent = f.nome;
+        document.getElementById('fm-cat').textContent = f.cat;
+        document.getElementById('fm-tipos').replaceChildren(...f.tipos.map(tipoEl));
+        modal.showModal();
+      });
+      frag.append(b);
+    }
+    lista.replaceChildren(frag);
   })
-  .catch(() => {
-    lista.innerHTML = '<p>Não foi possível carregar a lista de feras. Recarregue a página para tentar de novo.</p>';
-  });
+  .catch(() => { lista.textContent = 'Não foi possível carregar a Feradex. Recarregue a página para tentar de novo.'; });
+
 modal.querySelector('.fm-close').addEventListener('click', () => modal.close());
 modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });

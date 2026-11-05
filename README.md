@@ -2,7 +2,7 @@
 
 RPG de captura de criaturas em pixel art, **100% original**: todas as feras, personagens, mapas e a história foram criados do zero. Feito em TypeScript com HTML5 Canvas, empacotado como app para Windows (Electron) e jogável no navegador.
 
-**[Site e demonstração jogável](https://pqueirozdev.github.io/aurora-feras/)** · **[Baixar para Windows](https://github.com/PQueirozDev/aurora-feras/releases/latest)**
+**[Site e demonstração jogável](https://aurora-feras.vercel.app/)** · **[Baixar (Windows e Android)](https://aurora-feras.vercel.app/#download)**
 
 ![Batalha](site/img/batalha.png)
 

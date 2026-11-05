@@ -6,3 +6,8 @@ android/.gradle/
 android/build/
 *.log
 site-dist/
+android/local.properties
+.vercel
+
+.vercel
+.env*
