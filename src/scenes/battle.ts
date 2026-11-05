@@ -16,7 +16,7 @@ import { fmt } from './dialog';
 import { choose, ask } from '../game/game';
 import { openParty, openBag } from './menus';
 import { EvolutionScene } from './evolution';
-import { L, isEN, nomeGolpe, descGolpe, nomeItem, nomeTipo } from '../i18n';
+import { L, isEN, nomeGolpe, descGolpe, nomeItem, nomeTipo, traduzirFala } from '../i18n';
 import { Fx } from './battlefx';
 
 export type BattleResult = 'win' | 'lose' | 'run' | 'caught';
@@ -919,7 +919,7 @@ export class BattleScene extends Scene<BattleResult> {
     const m = this.F.m;
     box(6, 8, 108, 34);
     text(nomeDe(m), 14, 12, { size: 10, bold: true });
-    text(`Nv${m.nivel}`, 106, 12, { size: 9, align: 'right' });
+    text(`${L('Nv', 'Lv')}${m.nivel}`, 106, 12, { size: 9, align: 'right' });
     statusBadge(m.status, 14, 25);
     hpBar(42, 28, 56, this.hpShown.f / maxHp(m));
     if (S.capturados.includes(m.sp) && this.opts.wild) { ctx.drawImage(this.ballSpr, 33, 25, 8, 8); }
@@ -929,7 +929,7 @@ export class BattleScene extends Scene<BattleResult> {
     const m = this.P.m;
     box(124, 68, 112, 42);
     text(nomeDe(m), 132, 72, { size: 10, bold: true });
-    text(`Nv${m.nivel}`, 228, 72, { size: 9, align: 'right' });
+    text(`${L('Nv', 'Lv')}${m.nivel}`, 228, 72, { size: 9, align: 'right' });
     statusBadge(m.status, 132, 85);
     hpBar(160, 86, 56, this.hpShown.p / maxHp(m));
     text(`${Math.ceil(this.hpShown.p)}/${maxHp(m)}`, 228, 91, { size: 9, align: 'right' });
@@ -960,5 +960,5 @@ export function startWildBattle(sp: string, lvl: number) {
   return stack.push(new BattleScene({ wild: { sp, lvl } }));
 }
 export function startTrainerBattle(t: TrainerDef, musica?: string) {
-  return stack.push(new BattleScene({ trainer: { ...t, nome: fmt(t.nome) }, musica }));
+  return stack.push(new BattleScene({ trainer: { ...t, nome: fmt(t.nome), classe: traduzirFala(t.classe) }, musica }));
 }

@@ -107,7 +107,7 @@ class PartyScene extends Scene<number> {
       ctx.drawImage(creatureSprites(m.sp).icon, x + 8, y - 2 + (sel && Math.floor(Date.now() / 250) % 2 ? -1 : 0));
       ctx.globalAlpha = 1;
       text(nomeDe(m), x + 36, y + 4, { size: 10, bold: true });
-      text(`Nv${m.nivel}`, x + 110, y + 4, { size: 9 });
+      text(`${L('Nv', 'Lv')}${m.nivel}`, x + 110, y + 4, { size: 9 });
       statusBadge(m.status, x + 134, y + 5);
       hpBar(x + 156, y + 6, 48, m.hp / maxHp(m));
       text(`${m.hp}/${maxHp(m)}`, x + 218, y + 11, { size: 7, align: 'right', shadow: null });
@@ -142,7 +142,7 @@ class SummaryScene extends Scene<void> {
     rect(7, 7, 94, 94, '#d8f0f8');
     ctx.drawImage(creatureSprites(m.sp).front, 30, 24);
     text(nomeDe(m), 10, 82, { size: 10, bold: true });
-    text(`Nv${m.nivel}`, 96, 82, { size: 9, align: 'right' });
+    text(`${L('Nv', 'Lv')}${m.nivel}`, 96, 82, { size: 9, align: 'right' });
     sp.tipos.forEach((t, k) => typeBadge(t, 10 + k * 40, 108, TIPO_COR[t]));
     text(`Nº ${String(sp.id).padStart(3, '0')}  ${sp.nome}`, 8, 122, { size: 9 });
     text(`${L('Treinador', 'Trainer')}: ${m.dono ?? S.nome}`, 8, 134, { size: 9 });

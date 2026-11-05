@@ -4,13 +4,14 @@ import { audio } from '../engine/audio';
 import { W, H, text, wrap, measure } from '../engine/screen';
 import { box, arrowDown, cursor } from '../ui/draw';
 import { S, CFG } from '../game/state';
+import { traduzirFala } from '../i18n';
 
 const LINE_W = W - 28;
 const LINES = 2;
 
 /** substitui marcadores no texto */
 export function fmt(t: string) {
-  return t.replace(/\{nome\}/g, S.nome).replace(/\{rival\}/g, S.rival);
+  return traduzirFala(t).replace(/\{nome\}/g, S.nome).replace(/\{rival\}/g, S.rival);
 }
 
 /** Caixa de diálogo com texto digitado. Resolve quando o jogador termina de ler. */

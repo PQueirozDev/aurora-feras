@@ -3,16 +3,20 @@ import { MAPS, type WorldAPI } from '../src/data/maps';
 import { S, setState, novoEstado } from '../src/game/state';
 import { SPECIES } from '../src/data/species';
 import { ITEMS } from '../src/data/items';
+import { writeFileSync } from 'node:fs';
+const textos = new Set<string>();
+const add = (...t: string[]) => t.forEach((x) => x && textos.add(x));
 
 setState(novoEstado());
 let erros = 0;
 const npcs = new Map<string, { id: string; x: number; y: number; dir: any; hidden: boolean }>();
 const w: WorldAPI = {
-  say: async () => {}, ask: async () => true, choose: async () => 0,
+  say: async (...m) => add(...m), ask: async (m) => { add(m); return true; }, choose: async (m) => { if (m) add(m); return 0; },
   flag: (f) => !!S.flags[f], set: (f, v = true) => { S.flags[f] = v; },
   npc: (id) => npcs.get(id), moveNpc: async () => {}, movePlayer: async () => {},
   face: () => {}, facePlayer: () => {}, emote: async () => {},
   battleTrainer: async (t) => {
+    add(t.classe, t.intro, t.derrota, t.depois);
     for (const [sp, lv] of t.equipe) { if (!SPECIES[sp]) throw new Error('espécie inválida ' + sp); if (lv < 1 || lv > 100) throw new Error('nível inválido'); }
     S.flags[t.flag] = true; return true;
   },
@@ -26,6 +30,7 @@ const w: WorldAPI = {
   insignias: () => ['insignia_rocha', 'insignia_mare', 'insignia_volt', 'insignia_bruma'].filter((f) => S.flags[f]).length,
   credits: async () => {}, travel: async () => {},
 };
+for (const m of Object.values(MAPS)) { add(m.nome); for (const p of m.placas ?? []) add(p.texto); for (const n of m.npcs) if (n.trainer) add(n.trainer.classe, n.trainer.intro, n.trainer.derrota, n.trainer.depois); }
 for (const pass of [0, 1, 2]) {
   for (const [id, m] of Object.entries(MAPS)) {
     npcs.clear();
@@ -42,6 +47,16 @@ for (const pass of [0, 1, 2]) {
     try { await m.aoEntrar?.(w); } catch (e) { erros++; console.log(`ERRO ${id} aoEntrar:`, (e as Error).message); }
   }
   if (pass === 0) S.flags.labIntro = true;
+}
+writeFileSync('scripts/textos-historia.json', JSON.stringify([...textos].sort(), null, 1));
+{
+  const { CFG } = await import('../src/game/state');
+  const { traduzirFala } = await import('../src/i18n');
+  CFG.idioma = 'en';
+  const iguais = new Set(['Rival', 'Elite', 'Glub glub...', 'Aurorix: Kiiiaaah!', 'VILA ORVALHO', 'CIDADE VENTANIA', 'PORTO MARÉ', 'CIDADE FAÍSCA', 'VILA NEBLINA']);
+  const faltam = [...textos].filter((t) => traduzirFala(t) === t && !iguais.has(t));
+  CFG.idioma = 'pt';
+  console.log(faltam.length ? `Sem tradução (${faltam.length}):\n` + faltam.join('\n') : 'Tradução para inglês: 100% das falas');
 }
 const ins = w.insignias();
 console.log(erros ? `${erros} erro(s)` : `História OK — insígnias: ${ins}, campeão: ${!!S.flags.campeao}, flags: ${Object.keys(S.flags).length}`);

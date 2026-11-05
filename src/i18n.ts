@@ -23,3 +23,22 @@ export function descItem(id: string): string { return isEN() ? ITEM_EN[id]?.[1] 
 export function nomeTipo(t: Tipo): string { return isEN() ? TIPO_EN[t] : t; }
 export function catFera(k: string): string { return isEN() ? FERA_EN[k]?.[0] ?? SPECIES[k].cat : SPECIES[k].cat; }
 export function textoFera(k: string): string { return isEN() ? FERA_EN[k]?.[1] ?? SPECIES[k].texto : SPECIES[k].texto; }
+
+// ---------- falas da história ----------
+import { STORY_EN } from './data/story-en';
+let padroes: [RegExp, string][] | null = null;
+/** traduz uma fala da história para o idioma atual (sem tradução, devolve o original) */
+export function traduzirFala(pt: string): string {
+  if (!isEN() || !pt) return pt;
+  const direto = STORY_EN[pt];
+  if (direto !== undefined) return direto;
+  padroes ??= Object.entries(STORY_EN).filter(([k]) => k.includes('*')).map(([k, v]) => [
+    new RegExp('^' + k.split('*').map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(.+?)') + '$'),
+    v,
+  ]);
+  for (const [re, en] of padroes) {
+    const m = re.exec(pt);
+    if (m) { let i = 1; return en.replace(/\*/g, () => m[i++] ?? ''); }
+  }
+  return pt;
+}
