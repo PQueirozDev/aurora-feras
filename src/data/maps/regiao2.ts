@@ -48,7 +48,7 @@ export const REGIAO2: Record<string, MapDef> = {
       treinador('bosque_inseto', 4, 7, 'right', 'inseteiro', {
         classe: 'Inseteiro', nome: 'Caio', equipe: [['larvito', 10], ['mariluz', 11], ['larvito', 10]], premio: 165, visao: 3,
         intro: 'Este bosque é o paraíso dos insetos!',
-        derrota: 'Que derrota zumbidora...', depois: 'Dizem que um Besourão raríssimo vive aqui no bosque.',
+        derrota: 'Que derrota zumbidora...', depois: 'Dizem que um Escarabruto raríssimo vive aqui no bosque.',
       }),
       treinador('bosque_garota', 3, 16, 'right', 'garota', {
         classe: 'Exploradora', nome: 'Nina', equipe: [['cogumelinho', 11], ['gatuno', 12]], premio: 180, visao: 4,

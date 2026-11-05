@@ -3,7 +3,7 @@ import { input } from '../engine/input';
 import { audio } from '../engine/audio';
 import { W, H, text, wrap, measure } from '../engine/screen';
 import { box, arrowDown, cursor } from '../ui/draw';
-import { S } from '../game/state';
+import { S, CFG } from '../game/state';
 
 const LINE_W = W - 28;
 const LINES = 2;
@@ -30,7 +30,7 @@ export class Dialog extends Scene<void> {
   update() {
     this.t++;
     if (this.chars < this.total) {
-      this.chars += input.held('a') || input.held('b') ? 4 : S.opcoes?.texto === 'rapido' ? 3.5 : 1.5;
+      this.chars += input.held('a') || input.held('b') ? 4 : CFG.texto === 'rapido' ? 3.5 : 1.5;
       if (input.pressed('a') || input.pressed('b')) this.chars = this.total;
       return;
     }

@@ -1,4 +1,6 @@
 import { ctx, rect, text } from '../engine/screen';
+import { isEN, nomeTipo } from '../i18n';
+import type { Tipo } from '../data/types';
 
 /** caixa de janela estilo portátil clássico */
 export function box(x: number, y: number, w: number, h: number, style: 'normal' | 'azul' | 'escuro' = 'normal') {
@@ -25,7 +27,7 @@ export function arrowDown(x: number, y: number, t: number) {
 export function hpBar(x: number, y: number, w: number, frac: number) {
   frac = Math.max(0, Math.min(1, frac));
   rect(x, y, w + 14, 5, '#404848');
-  text('PV', x + 1, y - 2.5, { size: 7, color: '#f8b030', shadow: null, bold: true });
+  text(isEN() ? 'HP' : 'PV', x + 1, y - 2.5, { size: 7, color: '#f8b030', shadow: null, bold: true });
   rect(x + 13, y + 1, w, 3, '#506058');
   const col = frac > 0.5 ? '#58d080' : frac > 0.2 ? '#f8c838' : '#f05848';
   rect(x + 13, y + 1, Math.ceil(w * frac), 3, col);
@@ -41,7 +43,7 @@ export function xpBar(x: number, y: number, w: number, frac: number) {
 export function typeBadge(tipo: string, x: number, y: number, color: string) {
   rect(x, y, 36, 9, color);
   rect(x, y + 8, 36, 1, 'rgba(0,0,0,0.3)');
-  text(tipo.toUpperCase(), x + 18, y + 0.5, { size: 7, color: '#ffffff', shadow: 'rgba(0,0,0,0.4)', align: 'center', bold: true });
+  text(nomeTipo(tipo as Tipo).toUpperCase(), x + 18, y + 0.5, { size: 7, color: '#ffffff', shadow: 'rgba(0,0,0,0.4)', align: 'center', bold: true });
 }
 
 export const STATUS_TXT: Record<string, [string, string]> = {
@@ -52,7 +54,8 @@ export const STATUS_TXT: Record<string, [string, string]> = {
 };
 export function statusBadge(s: string | null, x: number, y: number) {
   if (!s) return;
-  const [t, c] = STATUS_TXT[s];
+  const [t0, c] = STATUS_TXT[s];
+  const t = isEN() ? ({ brn: 'BRN', psn: 'PSN', par: 'PAR', slp: 'SLP' } as Record<string, string>)[s] : t0;
   rect(x, y, 18, 8, c);
   text(t, x + 9, y, { size: 7, color: '#fff', shadow: null, align: 'center', bold: true });
 }

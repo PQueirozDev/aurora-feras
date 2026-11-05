@@ -16,6 +16,7 @@ import { fmt } from './dialog';
 import { choose, ask } from '../game/game';
 import { openParty, openBag } from './menus';
 import { EvolutionScene } from './evolution';
+import { L, isEN, nomeGolpe, descGolpe, nomeItem, nomeTipo } from '../i18n';
 import { Fx } from './battlefx';
 
 export type BattleResult = 'win' | 'lose' | 'run' | 'caught';
@@ -25,8 +26,11 @@ type BMon = { m: Mon; st: Record<Stat, number>; flinch: boolean };
 type Action = { k: 'move'; idx: number } | { k: 'item'; id: string; alvo?: number } | { k: 'switch'; idx: number } | { k: 'run' };
 
 const STRUGGLE: Move = { nome: 'Esforço', tipo: 'Normal', cat: 'fis', poder: 50, prec: 0, pp: 1, ef: { k: 'recoil' }, desc: '' };
-const STAT_NOME: Record<Stat, string> = { atk: 'Ataque', def: 'Defesa', spa: 'Ataque Especial', spd: 'Defesa Especial', spe: 'Velocidade' };
-const STATUS_MSG = { brn: 'foi queimado', psn: 'foi envenenado', par: 'ficou paralisado', slp: 'adormeceu' } as const;
+const STAT_PT: Record<Stat, string> = { atk: 'Ataque', def: 'Defesa', spa: 'Ataque Especial', spd: 'Defesa Especial', spe: 'Velocidade' };
+const STAT_EN: Record<Stat, string> = { atk: 'Attack', def: 'Defense', spa: 'Sp. Attack', spd: 'Sp. Defense', spe: 'Speed' };
+const statNome = (s: Stat) => (isEN() ? STAT_EN[s] : STAT_PT[s]);
+const STATUS_PT = { brn: 'foi queimado', psn: 'foi envenenado', par: 'ficou paralisado', slp: 'adormeceu' } as const;
+const STATUS_EN = { brn: 'was burned', psn: 'was poisoned', par: 'is paralyzed', slp: 'fell asleep' } as const;
 
 interface Waiter { update(): boolean; draw?(): void }
 
@@ -170,13 +174,13 @@ export class BattleScene extends Scene<BattleResult> {
       this.vis.f = true;
       this.off.f = [120, 0];
       await this.frames(30, (i) => (this.off.f = [Math.round(120 * (1 - (i + 1) / 30)), 0]));
-      await this.msg(`Um ${nomeDe(this.F.m)} selvagem apareceu!`);
+      await this.msg(L(`Um ${nomeDe(this.F.m)} selvagem apareceu!`, `A wild ${nomeDe(this.F.m)} appeared!`));
     } else {
       const tr = this.opts.trainer!;
       if (tr.lider || tr.chefe) { this.vsT = 90; await this.frames(90); }
       this.trainerX = 260;
       await this.frames(30, (i) => (this.trainerX = Math.round(260 - (260 - 172) * ((i + 1) / 30))));
-      await this.msg(`${tr.classe} ${tr.nome} quer lutar!`);
+      await this.msg(L(`${tr.classe} ${tr.nome} quer lutar!`, `${tr.classe} ${tr.nome} wants to battle!`));
       await this.frames(16, (i) => (this.trainerX = 172 + i * 6));
       this.trainerX = 400;
       await this.msg(`${tr.classe} ${tr.nome} enviou ${nomeDe(this.F.m)}!`);
@@ -238,16 +242,16 @@ export class BattleScene extends Scene<BattleResult> {
       this.uiMode = 'none';
       if (choice === 0) {
         const pp = this.P.m.golpes.some((g) => g.pp > 0);
-        if (!pp) { await this.msg(`${nomeDe(this.P.m)} não tem mais PP!`); return { k: 'move', idx: -1 }; }
+        if (!pp) { await this.msg(L(`${nomeDe(this.P.m)} não tem mais PP!`, `${nomeDe(this.P.m)} has no PP left!`)); return { k: 'move', idx: -1 }; }
         const idx = await this.chooseMove();
         if (idx >= 0) return { k: 'move', idx };
       } else if (choice === 1) {
         const id = await openBag('batalha');
         if (!id) continue;
         const it = item(id);
-        if (it.tipo === 'chave' || it.tipo === 'repelente') { await this.msg('Não dá para usar isso em batalha!'); continue; }
+        if (it.tipo === 'chave' || it.tipo === 'repelente') { await this.msg(L('Não dá para usar isso em batalha!', 'You can\'t use that in battle!')); continue; }
         if (it.tipo === 'captura') {
-          if (this.opts.trainer) { await this.msg('Não dá para capturar a fera de outro treinador!'); continue; }
+          if (this.opts.trainer) { await this.msg(L('Não dá para capturar a fera de outro treinador!', 'You can\'t catch another trainer\'s beast!')); continue; }
           return { k: 'item', id };
         }
         const alvo = await openParty('item', id);
@@ -258,7 +262,7 @@ export class BattleScene extends Scene<BattleResult> {
         if (idx < 0 || idx === this.pi) continue;
         return { k: 'switch', idx };
       } else {
-        if (this.opts.trainer) { await this.msg('Não dá para fugir de uma batalha contra treinador!'); continue; }
+        if (this.opts.trainer) { await this.msg(L('Não dá para fugir de uma batalha contra treinador!', 'You can\'t run from a trainer battle!')); continue; }
         return { k: 'run' };
       }
     }
@@ -329,12 +333,12 @@ export class BattleScene extends Scene<BattleResult> {
       const f = ps >= fs ? 256 : Math.min(256, Math.floor((ps * 128) / fs + 30 * this.fuga));
       if (ps >= fs || rnd(256) < f) {
         audio.sfx('run');
-        await this.msg('Você fugiu sem problemas!');
+        await this.msg(L('Você fugiu sem problemas!', 'Got away safely!'));
         return 'run';
       }
-      await this.msg('Não conseguiu fugir!');
+      await this.msg(L('Não conseguiu fugir!', 'Couldn\'t get away!'));
     } else if (act.k === 'switch') {
-      await this.msg(`Volte, ${nomeDe(this.P.m)}!`);
+      await this.msg(L(`Volte, ${nomeDe(this.P.m)}!`, `Come back, ${nomeDe(this.P.m)}!`));
       this.vis.p = false;
       await this.frames(10);
       this.pi = act.idx;
@@ -352,7 +356,7 @@ export class BattleScene extends Scene<BattleResult> {
         if (r) return 'caught';
       } else {
         const alvo = S.equipe[act.alvo!];
-        await this.msg(`{nome} usou ${it.nome}.`);
+        await this.msg(L(`{nome} usou ${nomeItem(act.id)}.`, `{nome} used ${nomeItem(act.id)}.`));
         await this.applyItem(alvo, act.id);
       }
     }
@@ -381,7 +385,7 @@ export class BattleScene extends Scene<BattleResult> {
         this.blink[s] = 12;
         audio.sfx('weak');
         await this.animHp();
-        await this.msg(`${this.nomeLado(s)} sofre com ${b.m.status === 'brn' ? 'a queimadura' : 'o veneno'}!`);
+        await this.msg(L(`${this.nomeLado(s)} sofre com ${b.m.status === 'brn' ? 'a queimadura' : 'o veneno'}!`, `${this.nomeLado(s)} is hurt by its ${b.m.status === 'brn' ? 'burn' : 'poison'}!`));
         const r = await this.checkFaint(s);
         if (r !== undefined) return r;
       }
@@ -392,6 +396,7 @@ export class BattleScene extends Scene<BattleResult> {
   private nomeLado(s: Side) {
     const b = s === 'p' ? this.P : this.F;
     if (s === 'p') return nomeDe(b.m);
+    if (isEN()) return this.opts.wild ? `Wild ${nomeDe(b.m)}` : `Foe ${nomeDe(b.m)}`;
     return this.opts.wild ? `${nomeDe(b.m)} selvagem` : `${nomeDe(b.m)} inimigo`;
   }
 
@@ -403,23 +408,23 @@ export class BattleScene extends Scene<BattleResult> {
     if (A.m.hp <= 0 || D.m.hp <= 0) return undefined;
     const an = this.nomeLado(s), dn = this.nomeLado(ds);
 
-    if (A.flinch) { await this.msg(`${an} hesitou e não atacou!`); return undefined; }
+    if (A.flinch) { await this.msg(L(`${an} hesitou e não atacou!`, `${an} flinched and couldn't move!`)); return undefined; }
     if (A.m.status === 'slp') {
-      if (A.m.sono > 0) { A.m.sono--; await this.msg(`${an} está dormindo profundamente.`); return undefined; }
+      if (A.m.sono > 0) { A.m.sono--; await this.msg(L(`${an} está dormindo profundamente.`, `${an} is fast asleep.`)); return undefined; }
       A.m.status = null;
-      await this.msg(`${an} acordou!`);
+      await this.msg(L(`${an} acordou!`, `${an} woke up!`));
     }
-    if (A.m.status === 'par' && Math.random() < 0.25) { await this.msg(`${an} está paralisado! Não consegue se mover!`); return undefined; }
+    if (A.m.status === 'par' && Math.random() < 0.25) { await this.msg(L(`${an} está paralisado! Não consegue se mover!`, `${an} is paralyzed! It can't move!`)); return undefined; }
 
     let mv: Move;
     if (idx < 0) mv = STRUGGLE;
     else { const g = A.m.golpes[idx]; g.pp = Math.max(0, g.pp - 1); mv = move(g.id); }
-    await this.msg(`${an} usou ${mv.nome}!`);
+    await this.msg(L(`${an} usou ${nomeGolpe(mv)}!`, `${an} used ${nomeGolpe(mv)}!`));
 
     // precisão
     const alvoEhOutro = !(mv.cat === 'status' && mv.ef && ((mv.ef.k === 'stat' && mv.ef.alvo === 'self') || mv.ef.k === 'stat2' || mv.ef.k === 'heal'));
     if (alvoEhOutro && mv.prec > 0 && Math.random() * 100 >= mv.prec) {
-      await this.msg(`${an} errou o ataque!`);
+      await this.msg(L(`${an} errou o ataque!`, `${an}'s attack missed!`));
       return undefined;
     }
 
@@ -429,7 +434,7 @@ export class BattleScene extends Scene<BattleResult> {
       await this.frames(10, (i) => (this.off[s] = [dir * (i < 5 ? i * 2 : (10 - i) * 2), 0]));
       this.off[s] = [0, 0];
       const eff = mv === STRUGGLE ? 1 : efetividade(mv.tipo, species(D.m).tipos);
-      if (eff === 0) { await this.msg(`Não afeta ${dn}...`); return undefined; }
+      if (eff === 0) { await this.msg(L(`Não afeta ${dn}...`, `It doesn't affect ${dn}...`)); return undefined; }
       const [fxX, fxY] = this.centro(ds);
       await this.frames(this.fx.golpe(mv.tipo, fxX, fxY));
       const critChance = mv.ef?.k === 'crit' ? 0.25 : 1 / 16;
@@ -441,23 +446,23 @@ export class BattleScene extends Scene<BattleResult> {
       const dealt = Math.min(D.m.hp, dmg);
       D.m.hp = Math.max(0, D.m.hp - dmg);
       await this.animHp();
-      if (crit && eff > 0) await this.msg('Um golpe crítico!');
-      if (eff > 1) await this.msg('Foi super eficaz!');
-      else if (eff < 1 && eff > 0) await this.msg('Não foi muito eficaz...');
+      if (crit && eff > 0) await this.msg(L('Um golpe crítico!', 'A critical hit!'));
+      if (eff > 1) await this.msg(L('Foi super eficaz!', 'It\'s super effective!'));
+      else if (eff < 1 && eff > 0) await this.msg(L('Não foi muito eficaz...', 'It\'s not very effective...'));
       // efeitos secundários
       const ef = mv.ef;
       if (ef?.k === 'drain' && A.m.hp > 0) {
         const h = Math.max(1, Math.floor(dealt / 2));
         A.m.hp = Math.min(maxHp(A.m), A.m.hp + h);
         await this.animHp();
-        await this.msg(`${dn} teve a energia drenada!`);
+        await this.msg(L(`${dn} teve a energia drenada!`, `${dn} had its energy drained!`));
       }
       if (ef?.k === 'recoil') {
         const r = Math.max(1, Math.floor(dealt / 4));
         A.m.hp = Math.max(0, A.m.hp - r);
         this.blink[s] = 10;
         await this.animHp();
-        await this.msg(`${an} também se machucou com o impacto!`);
+        await this.msg(L(`${an} também se machucou com o impacto!`, `${an} is hit with recoil!`));
       }
       if (D.m.hp > 0) {
         if (ef?.k === 'flinch' && first && Math.random() * 100 < ef.chance) D.flinch = true;
@@ -485,13 +490,13 @@ export class BattleScene extends Scene<BattleResult> {
     else if (ef.k === 'stat') await this.changeStat(ef.alvo === 'self' ? A : D, ef.alvo === 'self' ? s : ds, ef.stat, ef.n);
     else if (ef.k === 'status') await this.tryStatus(D, ds, ef.s, false);
     else if (ef.k === 'heal') {
-      if (A.m.hp >= maxHp(A.m)) await this.msg('Mas os PV já estão cheios!');
+      if (A.m.hp >= maxHp(A.m)) await this.msg(L('Mas os PV já estão cheios!', 'But its HP is already full!'));
       else {
         A.m.hp = Math.min(maxHp(A.m), A.m.hp + Math.floor(maxHp(A.m) / 2));
         audio.sfx('heal');
         const [hx, hy] = this.centro(s); this.fx.brilho(hx, hy);
         await this.animHp();
-        await this.msg(`${an} recuperou energia!`);
+        await this.msg(L(`${an} recuperou energia!`, `${an} regained health!`));
       }
     }
     return undefined;
@@ -526,21 +531,21 @@ export class BattleScene extends Scene<BattleResult> {
     D.m.status = st;
     if (st === 'slp') D.m.sono = 1 + rnd(3);
     this.flash[ds] = 10;
-    await this.msg(`${this.nomeLado(ds)} ${STATUS_MSG[st]}!`);
+    await this.msg(`${this.nomeLado(ds)} ${(isEN() ? STATUS_EN : STATUS_PT)[st]}!`);
   }
 
   private async changeStat(b: BMon, side: Side, stat: Stat, n: number) {
     const before = b.st[stat];
     b.st[stat] = Math.max(-6, Math.min(6, before + n));
     const nome = this.nomeLado(side);
-    if (b.st[stat] === before) { await this.msg(`${STAT_NOME[stat]} de ${nome} não pode ${n > 0 ? 'subir' : 'cair'} mais!`); return; }
+    if (b.st[stat] === before) { await this.msg(L(`${statNome(stat)} de ${nome} não pode ${n > 0 ? 'subir' : 'cair'} mais!`, `${nome}'s ${statNome(stat)} won't go any ${n > 0 ? 'higher' : 'lower'}!`)); return; }
     this.flash[side] = 12;
     audio.sfx(n > 0 ? 'heal' : 'weak');
     const [sx, sy] = this.centro(side);
     this.fx.setas(sx, sy, n > 0);
     await this.frames(20);
     const muito = Math.abs(n) >= 2 ? ' muito' : '';
-    await this.msg(`${STAT_NOME[stat]} de ${nome}${muito} ${n > 0 ? 'aumentou' : 'diminuiu'}!`);
+    await this.msg(L(`${statNome(stat)} de ${nome}${muito} ${n > 0 ? 'aumentou' : 'diminuiu'}!`, `${nome}'s ${statNome(stat)}${Math.abs(n) >= 2 ? ' sharply' : ''} ${n > 0 ? 'rose' : 'fell'}!`));
   }
 
   // ===================== desmaio / xp =====================
@@ -550,7 +555,7 @@ export class BattleScene extends Scene<BattleResult> {
     audio.sfx('faint');
     await this.frames(20, (i) => (this.sink[s] = (i + 1) / 20));
     this.vis[s] = false;
-    await this.msg(`${this.nomeLado(s)} desmaiou!`);
+    await this.msg(L(`${this.nomeLado(s)} desmaiou!`, `${this.nomeLado(s)} fainted!`));
     if (s === 'f') {
       await this.giveXp();
       this.fi++;
@@ -581,17 +586,17 @@ export class BattleScene extends Scene<BattleResult> {
     const f = this.F.m;
     const vivos = S.equipe.filter((m) => m.hp > 0 && this.participantes.has(m.uid));
     if (!vivos.length) return;
-    const base = Math.floor((species(f).xpBase * f.nivel) / 7 * (this.opts.trainer ? 1.5 : 1));
+    const base = Math.floor((species(f).xpBase * f.nivel) / 5 * (this.opts.trainer ? 1.5 : 1));
     const cada = Math.max(1, Math.floor(base / vivos.length));
     for (const m of vivos) {
-      await this.msg(`${nomeDe(m)} ganhou ${cada} pontos de experiência!`);
+      await this.msg(L(`${nomeDe(m)} ganhou ${cada} pontos de experiência!`, `${nomeDe(m)} gained ${cada} EXP. points!`));
       await this.addXp(m, cada);
     }
     if (S.flags.compartilhador) {
       const resto = S.equipe.filter((m) => m.hp > 0 && !this.participantes.has(m.uid));
       if (resto.length) {
         const metade = Math.max(1, Math.floor(base / 2 / resto.length));
-        await this.msg(`O resto da equipe ganhou ${metade} pontos de experiência pelo Compartilhador XP!`);
+        await this.msg(L(`O resto da equipe ganhou ${metade} pontos de experiência pelo Compartilhador XP!`, `The rest of the team gained ${metade} EXP. points from the XP Share!`));
         for (const m of resto) await this.addXp(m, metade);
       }
     }
@@ -615,7 +620,7 @@ export class BattleScene extends Scene<BattleResult> {
         m.hp += maxHp(m) - antes;
         if (m === this.P.m) { this.hpShown.p = m.hp; this.xpShown = 0; }
         audio.jingle('nivel');
-        await this.msg(`${nomeDe(m)} subiu para o nível ${m.nivel}!`, true);
+        await this.msg(L(`${nomeDe(m)} subiu para o nível ${m.nivel}!`, `${nomeDe(m)} grew to level ${m.nivel}!`), true);
         for (const id of golpesNoNivel(m, m.nivel)) await this.learnMove(m, id);
         if (podeEvoluir(m)) this.evolucoes.add(m.uid);
       }
@@ -627,21 +632,21 @@ export class BattleScene extends Scene<BattleResult> {
     const mv = MOVES[id];
     if (m.golpes.length < 4) {
       m.golpes.push({ id, pp: mv.pp });
-      await this.msg(`${nomeDe(m)} aprendeu ${mv.nome}!`, true);
+      await this.msg(L(`${nomeDe(m)} aprendeu ${nomeGolpe(id)}!`, `${nomeDe(m)} learned ${nomeGolpe(id)}!`), true);
       return;
     }
-    await this.msg(`${nomeDe(m)} quer aprender ${mv.nome}, mas já conhece 4 golpes.`, true);
-    const opts = [...m.golpes.map((g) => move(g.id).nome), `Não aprender`];
-    const r = await choose(`Esquecer qual golpe para aprender ${mv.nome}?`, opts, true);
-    if (r < 0 || r === 4) { await this.msg(`${nomeDe(m)} não aprendeu ${mv.nome}.`, true); return; }
-    const velho = move(m.golpes[r].id).nome;
+    await this.msg(L(`${nomeDe(m)} quer aprender ${nomeGolpe(id)}, mas já conhece 4 golpes.`, `${nomeDe(m)} wants to learn ${nomeGolpe(id)}, but it already knows 4 moves.`), true);
+    const opts = [...m.golpes.map((g) => nomeGolpe(g.id)), L('Não aprender', 'Skip')];
+    const r = await choose(L(`Esquecer qual golpe para aprender ${nomeGolpe(id)}?`, `Forget which move to learn ${nomeGolpe(id)}?`), opts, true);
+    if (r < 0 || r === 4) { await this.msg(L(`${nomeDe(m)} não aprendeu ${nomeGolpe(id)}.`, `${nomeDe(m)} did not learn ${nomeGolpe(id)}.`), true); return; }
+    const velho = nomeGolpe(m.golpes[r].id);
     m.golpes[r] = { id, pp: mv.pp };
-    await this.msg(`1, 2 e... Pronto! ${nomeDe(m)} esqueceu ${velho} e aprendeu ${mv.nome}!`, true);
+    await this.msg(L(`1, 2 e... Pronto! ${nomeDe(m)} esqueceu ${velho} e aprendeu ${nomeGolpe(id)}!`, `1, 2 and... Poof! ${nomeDe(m)} forgot ${velho} and learned ${nomeGolpe(id)}!`), true);
   }
 
   // ===================== captura =====================
   private async throwBall(bonus: number): Promise<boolean> {
-    await this.msg(`{nome} jogou uma ${bonus > 1 ? 'Supercápsula' : 'Cápsula'}!`);
+    await this.msg(L(`{nome} jogou uma cápsula!`, `{nome} threw a capsule!`));
     audio.sfx('throw');
     // voo da cápsula
     const x0 = 40, y0 = 100, x1 = 172, y1 = 40;
@@ -680,18 +685,18 @@ export class BattleScene extends Scene<BattleResult> {
     if (pego) {
       this.fx.estrelas(this.ball.x + 5, this.ball.y);
       await audio.jingle('captura');
-      await this.msg(`Peguei! ${nomeDe(m)} foi capturado!`, true);
+      await this.msg(L(`Peguei! ${nomeDe(m)} foi capturado!`, `Gotcha! ${nomeDe(m)} was caught!`), true);
       m.dono = S.nome;
       const novo = !S.capturados.includes(m.sp);
       marcarCapturado(m.sp);
-      if (novo) await this.msg(`Os dados de ${nomeDe(m)} foram registrados na Feradex!`, true);
+      if (novo) await this.msg(L(`Os dados de ${nomeDe(m)} foram registrados na Feradex!`, `${nomeDe(m)}'s data was added to the Beastdex!`), true);
       if (await ask(`Quer dar um apelido para ${nomeDe(m)}?`)) {
         const { NamingScene } = await import('./title');
         const ap = await stack.push(new NamingScene(`Apelido para ${nomeDe(m)}?`, nomeDe(m), 'player'));
         if (ap && ap !== nomeDe(m)) m.apelido = ap;
       }
       if (S.equipe.length < 6) S.equipe.push(m);
-      else { S.caixa.push(m); await this.msg(`A equipe está cheia. ${nomeDe(m)} foi enviado para o computador.`, true); }
+      else { S.caixa.push(m); await this.msg(L(`A equipe está cheia. ${nomeDe(m)} foi enviado para o computador.`, `Your team is full. ${nomeDe(m)} was sent to the PC.`), true); }
       this.ball = null;
       return true;
     }
@@ -701,7 +706,7 @@ export class BattleScene extends Scene<BattleResult> {
     this.shrink = 0;
     this.flash.f = 10;
     audio.sfx('door');
-    const frases = ['Ah não! A fera escapou!', 'Droga! Parecia que tinha pegado!', 'Argh! Quase!', 'Puxa! Foi por pouco!'];
+    const frases = isEN() ? ['Oh no! The beast broke free!', 'Aww! It appeared to be caught!', 'Argh! Almost had it!', 'Shoot! It was so close!'] : ['Ah não! A fera escapou!', 'Droga! Parecia que tinha pegado!', 'Argh! Quase!', 'Puxa! Foi por pouco!'];
     await this.msg(frases[Math.min(3, sacudidas)]);
     return false;
   }
@@ -714,19 +719,19 @@ export class BattleScene extends Scene<BattleResult> {
       m.hp = Math.min(maxHp(m), m.hp + (it.cura ?? 0));
       audio.sfx('heal');
       if (isActive) await this.animHp();
-      await this.msg(`${nomeDe(m)} recuperou ${m.hp - antes} PV!`);
+      await this.msg(L(`${nomeDe(m)} recuperou ${m.hp - antes} PV!`, `${nomeDe(m)} recovered ${m.hp - antes} HP!`));
     } else if (it.tipo === 'status') {
       m.status = null; m.sono = 0;
       audio.sfx('heal');
-      await this.msg(`${nomeDe(m)} está curado!`);
+      await this.msg(L(`${nomeDe(m)} está curado!`, `${nomeDe(m)} is cured!`));
     } else if (it.tipo === 'reviver') {
       m.hp = Math.floor(maxHp(m) / 2);
       audio.sfx('heal');
-      await this.msg(`${nomeDe(m)} foi reanimado!`);
+      await this.msg(L(`${nomeDe(m)} foi reanimado!`, `${nomeDe(m)} was revived!`));
     } else if (it.tipo === 'pp') {
       for (const g of m.golpes) g.pp = Math.min(move(g.id).pp, g.pp + 10);
       audio.sfx('heal');
-      await this.msg(`Os PP de ${nomeDe(m)} foram recuperados!`);
+      await this.msg(L(`Os PP de ${nomeDe(m)} foram recuperados!`, `${nomeDe(m)}'s PP was restored!`));
     }
     if (isActive) { const [hx, hy] = this.centro('p'); this.fx.brilho(hx, hy); }
   }
@@ -738,16 +743,16 @@ export class BattleScene extends Scene<BattleResult> {
       audio.music('vitoria');
       this.trainerX = 260;
       await this.frames(24, (i) => (this.trainerX = Math.round(260 - (260 - 172) * ((i + 1) / 24))));
-      await this.msg(`{nome} derrotou ${tr.classe} ${tr.nome}!`);
+      await this.msg(L(`{nome} derrotou ${tr.classe} ${tr.nome}!`, `{nome} defeated ${tr.classe} ${tr.nome}!`));
       if (tr.derrota) await this.msg(tr.derrota, true);
       S.dinheiro += tr.premio;
-      await this.msg(`{nome} ganhou $${tr.premio} pela vitória!`, true);
+      await this.msg(L(`{nome} ganhou $${tr.premio} pela vitória!`, `{nome} got $${tr.premio} for winning!`), true);
     } else if (this.outcome === 'win') {
       audio.music('vitoria');
       await this.frames(30);
     }
     if (this.outcome === 'lose' && this.opts.trainer && !this.opts.trainer.lider && this.opts.trainer.flag === 'rivalLab') {
-      await this.msg(`${this.opts.trainer.nome}: Viu só? Eu sou demais!`, true);
+      await this.msg(L(`${this.opts.trainer.nome}: Viu só? Eu sou demais!`, `${this.opts.trainer.nome}: See? I'm the best!`), true);
     }
     // evoluções
     for (const m of S.equipe) {
@@ -800,31 +805,39 @@ export class BattleScene extends Scene<BattleResult> {
     rect(0, 112, W, 48, '#283040');
     box(2, 114, W - 4, 44, 'escuro');
     if (this.uiMode === 'acao') {
-      text(`O que ${nomeDe(this.P.m)}`, 12, 122, { size: 11, color: '#fff', shadow: '#5a5a6a' });
-      text('vai fazer?', 12, 138, { size: 11, color: '#fff', shadow: '#5a5a6a' });
+      text(L(`O que ${nomeDe(this.P.m)}`, `What will ${nomeDe(this.P.m)}`), 12, 122, { size: 11, color: '#fff', shadow: '#5a5a6a' });
+      text(L('vai fazer?', 'do?'), 12, 138, { size: 11, color: '#fff', shadow: '#5a5a6a' });
       box(122, 114, 116, 44);
-      const ops = ['LUTAR', 'BOLSA', 'FERAS', 'FUGIR'];
+      const ops = isEN() ? ['FIGHT', 'BAG', 'TEAM', 'RUN'] : ['LUTAR', 'BOLSA', 'FERAS', 'FUGIR'];
       ops.forEach((o, i) => {
         const x = 136 + (i % 2) * 52, y = 121 + Math.floor(i / 2) * 16;
         text(o, x, y, { size: 11 });
         if (i === this.cur) cursor(x - 8, y + 3);
       });
     } else if (this.uiMode === 'golpe') {
+      const gsel = this.P.m.golpes[this.curMove];
+      if (gsel) {
+        box(2, 62, 118, 50);
+        wrap(descGolpe(gsel.id), 102, 8).slice(0, 4).forEach((l, i) => text(l, 9, 67 + i * 10, { size: 8, shadow: null }));
+      }
       box(2, 114, 156, 44);
       const g = this.P.m.golpes;
       for (let i = 0; i < 4; i++) {
         const x = 16 + (i % 2) * 70, y = 121 + Math.floor(i / 2) * 16;
-        text(g[i] ? move(g[i].id).nome : '-', x, y, { size: 10 });
+        text(g[i] ? nomeGolpe(g[i].id) : '-', x, y, { size: 10 });
         if (i === this.curMove) cursor(x - 8, y + 3);
       }
       box(156, 114, 82, 44);
       const sel = g[this.curMove];
       if (sel) {
         const mv = move(sel.id);
-        text('PP', 164, 121, { size: 10 });
-        text(`${sel.pp}/${mv.pp}`, 228, 121, { size: 10, align: 'right', color: sel.pp === 0 ? '#e04848' : '#383840' });
+        text('PP', 164, 118, { size: 10 });
+        text(`${sel.pp}/${mv.pp}`, 228, 118, { size: 10, align: 'right', color: sel.pp === 0 ? '#e04848' : '#383840' });
+        const forca = mv.cat === 'status' ? L('Estado', 'Status') : mv.ef?.k === 'fixo' ? L('Dano = Nv', 'Dmg = Lv') : `${L('Poder', 'Power')} ${mv.poder}`;
+        text(forca, 164, 129, { size: 8, shadow: null, color: '#585860' });
+        text(mv.prec ? `${mv.prec}%` : '100%', 228, 129, { size: 8, align: 'right', shadow: null, color: '#585860' });
         rect(164, 139, 66, 11, TIPO_COR[mv.tipo]);
-        text(mv.tipo.toUpperCase(), 197, 139.5, { size: 9, color: '#fff', shadow: 'rgba(0,0,0,.35)', align: 'center', bold: true });
+        text(nomeTipo(mv.tipo).toUpperCase(), 197, 139.5, { size: 9, color: '#fff', shadow: 'rgba(0,0,0,.35)', align: 'center', bold: true });
       }
     } else {
       this.msgText.forEach((ln, i) => text(ln, 12, 122 + i * 16, { size: 11, color: '#fff', shadow: '#5a5a6a' }));

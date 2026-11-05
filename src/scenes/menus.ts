@@ -6,7 +6,8 @@ import { box, cursor, hpBar, statusBadge, typeBadge } from '../ui/draw';
 import { creatureSprites } from '../gfx/creatures';
 import { silhouette } from '../gfx/pixel';
 import { capsuleSprite } from '../gfx/people';
-import { S, salvar, removeItem, addItem } from '../game/state';
+import { S, CFG, salvar, salvarConfig, removeItem, addItem, slotAtual } from '../game/state';
+import { L, isEN, nomeGolpe, nomeItem, descItem, nomeTipo, catFera, textoFera } from '../i18n';
 import { maxHp, nomeDe, species, stats, xpParaNivel, type Mon } from '../game/mon';
 import { move } from '../data/moves';
 import { item } from '../data/items';
@@ -14,6 +15,7 @@ import { SPECIES_LIST } from '../data/species';
 import { TIPO_COR } from '../data/types';
 import { say, ask, choose } from '../game/game';
 import { fmt } from './dialog';
+import { objetivoAtual, ondeEncontrar } from '../game/progress';
 
 const capIcon = capsuleSprite(undefined, 8);
 
@@ -74,20 +76,20 @@ class PartyScene extends Scene<number> {
   }
   private async act(m: Mon) {
     if (this.mode === 'item') {
-      if (!this.valid(m)) { await say('Não vai ter efeito.'); return; }
+      if (!this.valid(m)) { await say(L('Não vai ter efeito.', 'It won\'t have any effect.')); return; }
       this.finish(this.idx);
       return;
     }
     if (this.mode === 'troca') {
-      const r = await choose(null, ['TROCAR', 'RESUMO', 'CANCELAR']);
+      const r = await choose(null, [L('TROCAR', 'SWITCH'), L('RESUMO', 'SUMMARY'), L('CANCELAR', 'CANCEL')]);
       if (r === 1) { await stack.push(new SummaryScene(this.idx)); return; }
       if (r !== 0) return;
-      if (m.hp <= 0) { await say(`${nomeDe(m)} não tem energia para lutar!`); return; }
-      if (this.idx === this.ativo) { await say(`${nomeDe(m)} já está em batalha!`); return; }
+      if (m.hp <= 0) { await say(L(`${nomeDe(m)} não tem energia para lutar!`, `${nomeDe(m)} has no energy left to battle!`)); return; }
+      if (this.idx === this.ativo) { await say(L(`${nomeDe(m)} já está em batalha!`, `${nomeDe(m)} is already in battle!`)); return; }
       this.finish(this.idx);
       return;
     }
-    const r = await choose(null, ['RESUMO', 'MOVER', 'CANCELAR']);
+    const r = await choose(null, [L('RESUMO', 'SUMMARY'), L('MOVER', 'MOVE'), L('CANCELAR', 'CANCEL')]);
     if (r === 0) await stack.push(new SummaryScene(this.idx));
     else if (r === 1) this.swapFrom = this.idx;
   }
@@ -110,10 +112,10 @@ class PartyScene extends Scene<number> {
       hpBar(x + 156, y + 6, 48, m.hp / maxHp(m));
       text(`${m.hp}/${maxHp(m)}`, x + 218, y + 11, { size: 7, align: 'right', shadow: null });
     });
-    const msg = this.swapFrom >= 0 ? 'Mover para onde?'
-      : this.mode === 'item' ? 'Usar em qual fera?'
-      : this.mode === 'troca' ? (this.forcado ? 'Escolha a próxima fera.' : 'Escolha uma fera.')
-      : 'Escolha uma fera.';
+    const msg = this.swapFrom >= 0 ? L('Mover para onde?', 'Move to where?')
+      : this.mode === 'item' ? L('Usar em qual fera?', 'Use on which beast?')
+      : this.mode === 'troca' ? (this.forcado ? L('Escolha a próxima fera.', 'Choose the next beast.') : L('Escolha uma fera.', 'Choose a beast.'))
+      : L('Escolha uma fera.', 'Choose a beast.');
     footer(msg);
   }
 }
@@ -143,25 +145,25 @@ class SummaryScene extends Scene<void> {
     text(`Nv${m.nivel}`, 96, 82, { size: 9, align: 'right' });
     sp.tipos.forEach((t, k) => typeBadge(t, 10 + k * 40, 108, TIPO_COR[t]));
     text(`Nº ${String(sp.id).padStart(3, '0')}  ${sp.nome}`, 8, 122, { size: 9 });
-    text(`Treinador: ${m.dono ?? S.nome}`, 8, 134, { size: 9 });
+    text(`${L('Treinador', 'Trainer')}: ${m.dono ?? S.nome}`, 8, 134, { size: 9 });
     statusBadge(m.status, 84, 134);
-    text(this.page === 0 ? '◀ STATUS ▶' : '◀ GOLPES ▶', 54, 148, { size: 8, align: 'center', color: '#6a5a40', shadow: null });
+    text(this.page === 0 ? L('◀ STATUS ▶', '◀ STATS ▶') : L('◀ GOLPES ▶', '◀ MOVES ▶'), 54, 148, { size: 8, align: 'center', color: '#6a5a40', shadow: null });
 
     box(108, 4, 128, 152);
     if (this.page === 0) {
       const s = stats(m);
       const rows: [string, string][] = [
-        ['PV', `${m.hp}/${s.hp}`], ['Ataque', `${s.atk}`], ['Defesa', `${s.def}`],
-        ['At. Esp.', `${s.spa}`], ['Def. Esp.', `${s.spd}`], ['Velocidade', `${s.spe}`],
+        ['PV', `${m.hp}/${s.hp}`], [L('Ataque', 'Attack'), `${s.atk}`], [L('Defesa', 'Defense'), `${s.def}`],
+        [L('At. Esp.', 'Sp. Atk'), `${s.spa}`], [L('Def. Esp.', 'Sp. Def'), `${s.spd}`], [L('Velocidade', 'Speed'), `${s.spe}`],
       ];
       rows.forEach(([k, v], j) => {
         text(k, 116, 12 + j * 15, { size: 10 });
         text(v, 228, 12 + j * 15, { size: 10, align: 'right' });
       });
       const prox = xpParaNivel(m.nivel + 1);
-      text('Exp.', 116, 106, { size: 10 });
+      text(L('Exp.', 'Exp.'), 116, 106, { size: 10 });
       text(`${m.xp}`, 228, 106, { size: 10, align: 'right' });
-      text('Próx. nível', 116, 121, { size: 9 });
+      text(L('Próx. nível', 'Next level'), 116, 121, { size: 9 });
       text(`${Math.max(0, prox - m.xp)}`, 228, 121, { size: 9, align: 'right' });
       hpBar(130, 140, 80, m.hp / s.hp);
     } else {
@@ -169,10 +171,10 @@ class SummaryScene extends Scene<void> {
         const mv = move(g.id);
         const y = 10 + j * 34;
         rect(114, y, 36, 9, TIPO_COR[mv.tipo]);
-        text(mv.tipo.toUpperCase(), 132, y + 0.5, { size: 7, color: '#fff', shadow: 'rgba(0,0,0,.4)', align: 'center', bold: true });
-        text(mv.nome, 154, y - 1, { size: 10 });
+        text(nomeTipo(mv.tipo).toUpperCase(), 132, y + 0.5, { size: 7, color: '#fff', shadow: 'rgba(0,0,0,.4)', align: 'center', bold: true });
+        text(nomeGolpe(g.id), 154, y - 1, { size: 10 });
         text(`PP ${g.pp}/${mv.pp}`, 228, y + 11, { size: 9, align: 'right' });
-        text(mv.cat === 'status' ? 'Estado' : `Poder ${mv.poder}`, 116, y + 11, { size: 9 });
+        text(mv.cat === 'status' ? L('Estado', 'Status') : `${L('Poder', 'Power')} ${mv.poder}`, 116, y + 11, { size: 9 });
       });
     }
   }
@@ -204,19 +206,19 @@ class BagScene extends Scene<string | null> {
   }
   private async useField(id: string) {
     const it = item(id);
-    const r = await choose(null, ['USAR', 'CANCELAR']);
+    const r = await choose(null, [L('USAR', 'USE'), L('CANCELAR', 'CANCEL')]);
     if (r !== 0) return;
-    if (it.tipo === 'captura') { await say('Não dá para usar isso agora.'); return; }
-    if (it.tipo === 'chave') { await say(it.desc); return; }
+    if (it.tipo === 'captura') { await say(L('Não dá para usar isso agora.', 'You can\'t use that now.')); return; }
+    if (it.tipo === 'chave') { await say(descItem(id)); return; }
     if (it.tipo === 'repelente') {
-      if ((S.repelente ?? 0) > 0) { await say('Ainda há repelente fazendo efeito.'); return; }
+      if ((S.repelente ?? 0) > 0) { await say(L('Ainda há repelente fazendo efeito.', 'A repel is still active.')); return; }
       removeItem(id);
       S.repelente = it.passos ?? 100;
       audio.sfx('heal');
-      await say(`{nome} usou ${it.nome}. As feras selvagens vão ficar longe por ${S.repelente} passos.`);
+      await say(L(`{nome} usou ${nomeItem(id)}. As feras selvagens vão ficar longe por ${S.repelente} passos.`, `{nome} used ${nomeItem(id)}. Wild beasts will stay away for ${S.repelente} steps.`));
       return;
     }
-    if (!S.equipe.length) { await say('Você não tem feras.'); return; }
+    if (!S.equipe.length) { await say(L('Você não tem feras.', 'You have no beasts.')); return; }
     const alvo = await openParty('item', id);
     if (alvo < 0) return;
     const m = S.equipe[alvo];
@@ -225,28 +227,28 @@ class BagScene extends Scene<string | null> {
     if (it.tipo === 'cura') {
       const antes = m.hp;
       m.hp = Math.min(maxHp(m), m.hp + (it.cura ?? 0));
-      await say(`${nomeDe(m)} recuperou ${m.hp - antes} PV!`);
+      await say(L(`${nomeDe(m)} recuperou ${m.hp - antes} PV!`, `${nomeDe(m)} recovered ${m.hp - antes} HP!`));
     } else if (it.tipo === 'status') {
       m.status = null; m.sono = 0;
-      await say(`${nomeDe(m)} está curado!`);
+      await say(L(`${nomeDe(m)} está curado!`, `${nomeDe(m)} is cured!`));
     } else if (it.tipo === 'reviver') {
       m.hp = Math.floor(maxHp(m) / 2);
-      await say(`${nomeDe(m)} foi reanimado!`);
+      await say(L(`${nomeDe(m)} foi reanimado!`, `${nomeDe(m)} was revived!`));
     } else if (it.tipo === 'pp') {
       for (const g of m.golpes) g.pp = Math.min(move(g.id).pp, g.pp + 10);
-      await say(`Os PP de ${nomeDe(m)} foram recuperados!`);
+      await say(L(`Os PP de ${nomeDe(m)} foram recuperados!`, `${nomeDe(m)}'s PP was restored!`));
     }
   }
   draw() {
     bg('#e8a858', '#e09848');
     box(4, 4, 80, 96);
-    text('BOLSA', 44, 10, { size: 12, bold: true, align: 'center' });
+    text(L('BOLSA', 'BAG'), 44, 10, { size: 12, bold: true, align: 'center' });
     // desenho simples de mochila
     rect(24, 30, 40, 50, '#a85828'); rect(28, 26, 32, 10, '#c87038'); rect(30, 44, 28, 18, '#c87038'); rect(40, 50, 8, 4, '#f8d838');
     text(`$${S.dinheiro}`, 44, 84, { size: 10, align: 'center' });
     box(88, 4, 148, 108);
     const list = this.items();
-    const rows = [...list.map((k) => [item(k).nome, `x${S.bolsa[k]}`]), ['FECHAR', '']];
+    const rows = [...list.map((k) => [nomeItem(k), `x${S.bolsa[k]}`]), [L('FECHAR', 'CLOSE'), '']];
     rows.slice(this.top, this.top + 6).forEach(([n, q], j) => {
       const i = j + this.top;
       const y = 12 + j * 16;
@@ -256,7 +258,7 @@ class BagScene extends Scene<string | null> {
     });
     box(2, 114, W - 4, 44);
     const id = list[this.idx];
-    const desc = id ? item(id).desc : 'Fechar a bolsa.';
+    const desc = id ? descItem(id) : L('Fechar a bolsa.', 'Close the bag.');
     wrap(desc, W - 24, 10).slice(0, 2).forEach((l, i) => text(l, 12, 122 + i * 15, { size: 10 }));
   }
 }
@@ -288,19 +290,20 @@ class DexScene extends Scene<void> {
       rect(10, 10, 66, 68, '#e8f0f8');
       ctx.drawImage(creatureSprites(key).front, 19, 20);
       text(`Nº${String(sp.id).padStart(3, '0')}  ${sp.nome}`, 84, 12, { size: 11, bold: true });
-      text(sp.cat, 84, 28, { size: 10 });
+      text(catFera(key), 84, 28, { size: 10 });
       sp.tipos.forEach((t, k) => typeBadge(t, 84 + k * 40, 46, TIPO_COR[t]));
-      if (!pego) text('Capture para saber mais.', 84, 62, { size: 9, color: '#787880' });
+      wrap(ondeEncontrar(key), 140, 8).slice(0, 2).forEach((l, i) => text(l, 84, 59 + i * 10, { size: 8, color: '#585860', shadow: null }));
       box(4, 86, W - 8, 70);
-      const txt = pego ? sp.texto : '...';
+      const txt = pego ? textoFera(key) : '...';
       wrap(txt, W - 28, 10).slice(0, 4).forEach((l, i) => text(l, 14, 94 + i * 14, { size: 10 }));
+      if (!pego) text(L('Capture para ler a descrição completa.', 'Catch it to read the full entry.'), 14, 108, { size: 9, color: '#787880' });
       return;
     }
     box(4, 4, 92, 120);
     rect(8, 8, 84, 84, '#e8f0f8');
     if (visto) ctx.drawImage(pego ? creatureSprites(key).front : silhouette(creatureSprites(key).front, '#505868'), 26, 26);
-    text(`Vistos: ${S.vistos.length}`, 12, 96, { size: 9 });
-    text(`Capturados: ${S.capturados.length}`, 12, 108, { size: 9 });
+    text(`${L('Vistos', 'Seen')}: ${S.vistos.length}`, 12, 96, { size: 9 });
+    text(`${L('Capturados', 'Caught')}: ${S.capturados.length}`, 12, 108, { size: 9 });
     box(100, 4, 136, 152);
     SPECIES_LIST.slice(this.top, this.top + 8).forEach(([k, s], j) => {
       const i = j + this.top;
@@ -311,7 +314,7 @@ class DexScene extends Scene<void> {
       if (i === this.idx) cursor(105, y + 3);
     });
     box(4, 126, 92, 30);
-    text('A: ver   B: sair', 50, 135, { size: 9, align: 'center' });
+    text(L('A: ver   B: sair', 'A: view   B: exit'), 50, 135, { size: 9, align: 'center' });
   }
 }
 
@@ -321,15 +324,15 @@ class CardScene extends Scene<void> {
   draw() {
     bg('#88a8d8', '#7898c8');
     box(10, 8, W - 20, 144);
-    text('CARTÃO DE TREINADOR', W / 2, 15, { size: 11, bold: true, align: 'center' });
+    text(L('CARTÃO DE TREINADOR', 'TRAINER CARD'), W / 2, 15, { size: 11, bold: true, align: 'center' });
     const h = Math.floor(S.tempo / 3600), mi = Math.floor((S.tempo % 3600) / 60);
     const ins = INSIGNIAS.filter((b) => S.flags[b.flag]).length;
     const rows: [string, string][] = [
-      ['Nome', S.nome], ['Dinheiro', `$${S.dinheiro}`], ['Feradex', `${S.capturados.length}/41`],
-      ['Tempo', `${h}:${String(mi).padStart(2, '0')}`], ['Insígnias', `${ins}/4`],
+      [L('Nome', 'Name'), S.nome], [L('Dinheiro', 'Money'), `$${S.dinheiro}`], [L('Feradex', 'Beastdex'), `${S.capturados.length}/41`],
+      [L('Tempo', 'Time'), `${h}:${String(mi).padStart(2, '0')}`], [L('Insígnias', 'Badges'), `${ins}/4`],
     ];
     rows.forEach(([k, v], i) => { text(k, 24, 32 + i * 14, { size: 10 }); text(v, 132, 32 + i * 14, { size: 10, align: 'right' }); });
-    if (S.flags.campeao) text('★ CAMPEÃO DE AURORA ★', 182, 36, { size: 8, align: 'center', color: '#c89018', shadow: null, bold: true });
+    if (S.flags.campeao) text(L('★ CAMPEÃO DE AURORA ★', '★ AURORA CHAMPION ★'), 182, 36, { size: 8, align: 'center', color: '#c89018', shadow: null, bold: true });
     INSIGNIAS.forEach((b, i) => {
       const x = 24 + i * 50, y = 108;
       rect(x, y, 36, 36, '#d8d8e0');
@@ -395,35 +398,35 @@ class ShopList extends Scene<void> {
       const preco = Math.floor(it.preco / 2);
       const q = await stack.push(new QtyScene(preco, S.bolsa[id]));
       if (!q) return;
-      if (await ask(`Posso pagar $${q * preco} por ${q}x ${it.nome}. Tudo bem?`)) {
+      if (await ask(L(`Posso pagar $${q * preco} por ${q}x ${nomeItem(id)}. Tudo bem?`, `I can pay $${q * preco} for ${q}x ${nomeItem(id)}. OK?`))) {
         removeItem(id, q);
         S.dinheiro += q * preco;
         audio.sfx('save');
-        await say(`Você entregou ${q}x ${it.nome} e recebeu $${q * preco}.`);
+        await say(L(`Você entregou ${q}x ${nomeItem(id)} e recebeu $${q * preco}.`, `You handed over ${q}x ${nomeItem(id)} and got $${q * preco}.`));
       }
       return;
     }
     const max = Math.max(1, Math.min(99, Math.floor(S.dinheiro / it.preco)));
-    if (S.dinheiro < it.preco) { await say('Você não tem dinheiro suficiente.'); return; }
+    if (S.dinheiro < it.preco) { await say(L('Você não tem dinheiro suficiente.', 'You don\'t have enough money.')); return; }
     const q = await stack.push(new QtyScene(it.preco, max));
     if (!q) return;
     const total = q * it.preco;
-    if (await ask(`${q}x ${it.nome} vai custar $${total}. Tudo bem?`)) {
+    if (await ask(L(`${q}x ${nomeItem(id)} vai custar $${total}. Tudo bem?`, `${q}x ${nomeItem(id)} will cost $${total}. OK?`))) {
       S.dinheiro -= total;
       addItem(id, q);
       audio.sfx('save');
-      await say('Aqui está! Obrigado!');
-      if (id === 'capsula' && q >= 10) { addItem('capsula', 1); await say('Ganhou uma Cápsula extra de brinde!'); }
+      await say(L('Aqui está! Obrigado!', 'Here you go! Thank you!'));
+      if (id === 'capsula' && q >= 10) { addItem('capsula', 1); await say(L('Ganhou uma Cápsula extra de brinde!', 'You also got a bonus Capsule!')); }
     }
   }
   draw() {
     bg('#78a8e0', '#6898d0');
     box(4, 4, 96, 30);
-    text('DINHEIRO', 12, 8, { size: 8 });
+    text(L('DINHEIRO', 'MONEY'), 12, 8, { size: 8 });
     text(`$${S.dinheiro}`, 92, 18, { size: 11, align: 'right' });
     box(104, 4, 132, 104);
     const l = this.list();
-    const rows = [...l.map((k) => [item(k).nome, this.vender ? `x${S.bolsa[k]}` : `$${item(k).preco}`]), ['SAIR', '']];
+    const rows = [...l.map((k) => [nomeItem(k), this.vender ? `x${S.bolsa[k]}` : `$${item(k).preco}`]), [L('SAIR', 'EXIT'), '']];
     rows.slice(this.top, this.top + 5).forEach(([n, p], j) => {
       const i = j + this.top;
       const y = 12 + j * 18;
@@ -433,23 +436,23 @@ class ShopList extends Scene<void> {
     });
     box(4, 38, 96, 70);
     const id = l[this.idx];
-    if (id) text(`Na bolsa: ${S.bolsa[id] ?? 0}`, 12, 46, { size: 9 });
+    if (id) text(`${L('Na bolsa', 'In bag')}: ${S.bolsa[id] ?? 0}`, 12, 46, { size: 9 });
     box(2, 112, W - 4, 46);
-    const desc = id ? item(id).desc : 'Voltar.';
+    const desc = id ? descItem(id) : L('Voltar.', 'Go back.');
     wrap(desc, W - 24, 10).slice(0, 2).forEach((ln, i) => text(ln, 12, 120 + i * 15, { size: 10 }));
   }
 }
 
 export async function openShop(stock: string[]) {
   for (;;) {
-    const r = await choose('O que você deseja?', ['COMPRAR', 'VENDER', 'SAIR']);
+    const r = await choose(L('O que você deseja?', 'How may I help you?'), [L('COMPRAR', 'BUY'), L('VENDER', 'SELL'), L('SAIR', 'EXIT')]);
     if (r === 0) await stack.push(new ShopList(stock, false));
     else if (r === 1) {
-      if (!Object.keys(S.bolsa).length) { await say('Você não tem nada para vender.'); continue; }
+      if (!Object.keys(S.bolsa).length) { await say(L('Você não tem nada para vender.', 'You have nothing to sell.')); continue; }
       await stack.push(new ShopList(stock, true));
     } else break;
   }
-  await say('Volte sempre!');
+  await say(L('Volte sempre!', 'Please come again!'));
 }
 
 // ======================= COMPUTADOR =======================
@@ -477,7 +480,7 @@ class BoxScene extends Scene<number> {
       text(`PV ${m.hp}/${maxHp(m)}`, 52, 108, { size: 9, align: 'center' });
     }
     box(104, 4, 132, 152);
-    const rows = [...this.lista.map((x) => `${nomeDe(x)}  Nv${x.nivel}`), 'VOLTAR'];
+    const rows = [...this.lista.map((x) => `${nomeDe(x)}  Nv${x.nivel}`), L('VOLTAR', 'BACK')];
     rows.slice(this.top, this.top + 7).forEach((r, j) => {
       const i = j + this.top;
       const y = 12 + j * 20;
@@ -489,42 +492,57 @@ class BoxScene extends Scene<number> {
 
 export async function openPC() {
   for (;;) {
-    const r = await choose('Sistema de Armazenamento de Feras. O que deseja fazer?', ['RETIRAR FERA', 'DEPOSITAR FERA', 'DESLIGAR']);
+    const r = await choose(L('Sistema de Armazenamento de Feras. O que deseja fazer?', 'Beast Storage System. What would you like to do?'), [L('RETIRAR FERA', 'WITHDRAW'), L('DEPOSITAR FERA', 'DEPOSIT'), L('DESLIGAR', 'LOG OFF')]);
     if (r === 0) {
-      if (!S.caixa.length) { await say('Não há feras guardadas.'); continue; }
-      if (S.equipe.length >= 6) { await say('Sua equipe está cheia!'); continue; }
-      const i = await stack.push(new BoxScene(S.caixa, 'CAIXA'));
+      if (!S.caixa.length) { await say(L('Não há feras guardadas.', 'No beasts are stored.')); continue; }
+      if (S.equipe.length >= 6) { await say(L('Sua equipe está cheia!', 'Your team is full!')); continue; }
+      const i = await stack.push(new BoxScene(S.caixa, L('CAIXA', 'BOX')));
       if (i < 0) continue;
       const [m] = S.caixa.splice(i, 1);
       S.equipe.push(m);
-      await say(`${nomeDe(m)} foi retirado. Até logo, caixa!`);
+      await say(L(`${nomeDe(m)} foi retirado. Até logo, caixa!`, `${nomeDe(m)} was withdrawn.`));
     } else if (r === 1) {
-      if (S.equipe.length <= 1) { await say('Você não pode ficar sem nenhuma fera!'); continue; }
-      const i = await stack.push(new BoxScene(S.equipe, 'EQUIPE'));
+      if (S.equipe.length <= 1) { await say(L('Você não pode ficar sem nenhuma fera!', 'You can\'t be left with no beasts!')); continue; }
+      const i = await stack.push(new BoxScene(S.equipe, L('EQUIPE', 'TEAM')));
       if (i < 0) continue;
       const restantes = S.equipe.filter((_, k) => k !== i);
-      if (!restantes.some((m) => m.hp > 0)) { await say('Você precisa de pelo menos uma fera em condições de lutar!'); continue; }
+      if (!restantes.some((m) => m.hp > 0)) { await say(L('Você precisa de pelo menos uma fera em condições de lutar!', 'You need at least one beast that can battle!')); continue; }
       const [m] = S.equipe.splice(i, 1);
       S.caixa.push(m);
-      await say(`${nomeDe(m)} foi guardado no computador.`);
+      await say(L(`${nomeDe(m)} foi guardado no computador.`, `${nomeDe(m)} was stored in the PC.`));
     } else break;
   }
 }
 
 // ======================= OPÇÕES =======================
-async function openOptions() {
+export async function openOptions() {
   for (;;) {
     const fs = !!document.fullscreenElement;
-    const rapido = S.opcoes?.texto === 'rapido';
-    const r = await choose(null, [`TEXTO: ${rapido ? 'RÁPIDO' : 'NORMAL'}`, `TELA CHEIA: ${fs ? 'SIM' : 'NÃO'}`, 'VOLTAR']);
-    if (r === 0) { S.opcoes = { texto: rapido ? 'normal' : 'rapido' }; continue; }
-    if (r === 2 || r < 0) break;
-    if (r === 1) {
-      try {
-        if (fs) await document.exitFullscreen();
-        else await document.documentElement.requestFullscreen();
-      } catch { await say('Não foi possível mudar para tela cheia.'); }
-    } else break;
+    const sim = L('SIM', 'ON'), nao = L('NÃO', 'OFF');
+    const r = await choose(null, [
+      `${L('IDIOMA', 'LANGUAGE')}: ${CFG.idioma === 'en' ? 'ENGLISH' : 'PORTUGUÊS'}`,
+      `${L('TEXTO', 'TEXT')}: ${CFG.texto === 'rapido' ? L('RÁPIDO', 'FAST') : 'NORMAL'}`,
+      `${L('SALVAR SOZINHO', 'AUTOSAVE')}: ${CFG.autosave ? sim : nao}`,
+      `${L('TELA CHEIA', 'FULLSCREEN')}: ${fs ? sim : nao}`,
+      L('CONTROLES', 'CONTROLS'),
+      L('VOLTAR', 'BACK'),
+    ]);
+    if (r === 0) { CFG.idioma = CFG.idioma === 'en' ? 'pt' : 'en'; salvarConfig(); continue; }
+    if (r === 1) { CFG.texto = CFG.texto === 'rapido' ? 'normal' : 'rapido'; salvarConfig(); continue; }
+    if (r === 2) { CFG.autosave = !CFG.autosave; salvarConfig(); continue; }
+    if (r === 3) {
+      try { if (fs) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
+      catch { await say(L('Não foi possível mudar para tela cheia.', 'Could not switch to fullscreen.')); }
+      continue;
+    }
+    if (r === 4) {
+      await say(
+        L('Teclado: setas para andar, Z para confirmar, X para voltar (segure para correr), Enter para o menu.', 'Keyboard: arrows to move, Z to confirm, X to go back (hold to run), Enter for the menu.'),
+        L('Controle: direcional para andar, A confirma, B volta, Start abre o menu. No celular, use os botões na tela.', 'Gamepad: D-pad to move, A confirms, B goes back, Start opens the menu. On phones, use the on-screen buttons.'),
+      );
+      continue;
+    }
+    break;
   }
 }
 
@@ -556,20 +574,21 @@ export async function openStartMenu() {
   for (;;) {
     const opts: string[] = [];
     const acts: (() => Promise<boolean | void>)[] = [];
-    if (S.flags.feradex) { opts.push('FERADEX'); acts.push(async () => { await stack.push(new DexScene()); }); }
-    if (S.equipe.length) { opts.push('FERAS'); acts.push(async () => { await openParty('ver'); }); }
-    opts.push('BOLSA'); acts.push(async () => { await openBag('campo'); });
+    opts.push(L('OBJETIVO', 'GOAL')); acts.push(async () => { await say(L('Objetivo: ', 'Goal: ') + objetivoAtual()); });
+    if (S.flags.feradex) { opts.push(L('FERADEX', 'BEASTDEX')); acts.push(async () => { await stack.push(new DexScene()); }); }
+    if (S.equipe.length) { opts.push(L('FERAS', 'TEAM')); acts.push(async () => { await openParty('ver'); }); }
+    opts.push(L('BOLSA', 'BAG')); acts.push(async () => { await openBag('campo'); });
     opts.push(fmt('{nome}').toUpperCase()); acts.push(async () => { await stack.push(new CardScene()); });
-    opts.push('SALVAR'); acts.push(async () => {
-      if (await ask('Deseja salvar o jogo?')) {
+    opts.push(L('SALVAR', 'SAVE')); acts.push(async () => {
+      if (await ask(L('Deseja salvar o jogo?', 'Save the game?'))) {
         const ok = salvar();
         audio.sfx('save');
-        await say(ok ? '{nome} salvou o jogo.' : 'Não foi possível salvar!');
+        await say(ok ? L(`{nome} salvou o jogo no espaço ${slotAtual}.`, `{nome} saved the game in slot ${slotAtual}.`) : L('Não foi possível salvar!', 'Could not save!'));
       }
       return true;
     });
-    opts.push('OPÇÕES'); acts.push(async () => { await openOptions(); });
-    opts.push('FECHAR'); acts.push(async () => true);
+    opts.push(L('OPÇÕES', 'OPTIONS')); acts.push(async () => { await openOptions(); });
+    opts.push(L('FECHAR', 'CLOSE')); acts.push(async () => true);
     const m = new StartMenu(opts);
     m.idx = Math.min(lastStart, opts.length - 1);
     const r = await stack.push(m);

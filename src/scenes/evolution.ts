@@ -8,6 +8,7 @@ import { silhouette } from '../gfx/pixel';
 import { evoluir, nomeDe, type Mon } from '../game/mon';
 import { marcarCapturado } from '../game/state';
 import { SPECIES } from '../data/species';
+import { L } from '../i18n';
 
 export class EvolutionScene extends Scene<void> {
   private t = 0;
@@ -17,7 +18,7 @@ export class EvolutionScene extends Scene<void> {
   constructor(private m: Mon, private para: string) {
     super();
     this.velho = nomeDe(m);
-    this.msg = `O quê? ${this.velho} está evoluindo!`;
+    this.msg = L(`O quê? ${this.velho} está evoluindo!`, `What? ${this.velho} is evolving!`);
   }
   onEnter() { audio.music(null); }
   update() {
@@ -28,7 +29,7 @@ export class EvolutionScene extends Scene<void> {
       evoluir(this.m, this.para);
       marcarCapturado(this.para);
       audio.jingle('captura');
-      this.msg = `Parabéns! ${this.velho} evoluiu para ${SPECIES[this.para].nome}!`;
+      this.msg = L(`Parabéns! ${this.velho} evoluiu para ${SPECIES[this.para].nome}!`, `Congratulations! ${this.velho} evolved into ${SPECIES[this.para].nome}!`);
     } else if (this.phase === 2 && this.t > 60 && (input.pressed('a') || input.pressed('b') || this.t > 240)) {
       this.finish();
     }

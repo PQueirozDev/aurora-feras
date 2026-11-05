@@ -37,56 +37,56 @@ const b = (hp: number, atk: number, def: number, spa: number, spd: number, spe: 
 export const SPECIES: Record<string, Species> = {
   // ===== iniciais =====
   brasilho: {
-    id: 1, nome: 'Brasilho', tipos: ['Fogo'], base: b(39, 52, 43, 60, 50, 65), captura: 45, xpBase: 62,
+    id: 1, nome: 'Fagulin', tipos: ['Fogo'], base: b(39, 52, 43, 60, 50, 65), captura: 45, xpBase: 62,
     golpes: [[1, 'arranhao'], [1, 'rosnado'], [7, 'brasa'], [10, 'fumaca'], [13, 'rodafogo'], [17, 'mordida'], [21, 'presaflama'], [28, 'labareda'], [38, 'erupcao']],
     evolui: { nivel: 16, para: 'fornalhao' }, cat: 'Fera Fagulha',
     texto: 'A chama em sua cabeça fica mais forte quando ele está feliz. Adora dormir perto de fogueiras.',
     look: { corpo: 'quadrupede', c1: '#e86838', c2: '#f8e0b8', c3: '#f8d838', tam: 0.72, detalhes: ['orelhas', 'chamas', 'cauda'], olho: 'fofo' },
   },
   fornalhao: {
-    id: 2, nome: 'Fornalhão', tipos: ['Fogo'], base: b(58, 72, 62, 82, 66, 82), captura: 45, xpBase: 142,
+    id: 2, nome: 'Lobrasa', tipos: ['Fogo'], base: b(58, 72, 62, 82, 66, 82), captura: 45, xpBase: 142,
     golpes: [[1, 'arranhao'], [1, 'brasa'], [13, 'rodafogo'], [17, 'mordida'], [21, 'presaflama'], [28, 'labareda'], [33, 'dancaespada'], [38, 'erupcao']],
     evolui: { nivel: 34, para: 'labaredor' }, cat: 'Fera Fornalha',
     texto: 'Seu corpo fica tão quente que a grama seca por onde ele passa. Protege seu treinador com ferocidade.',
     look: { corpo: 'quadrupede', c1: '#c84028', c2: '#f8c080', c3: '#f8e048', tam: 0.9, detalhes: ['orelhas', 'chamas', 'espinhos', 'caudaFogo'], olho: 'bravo' },
   },
   labaredor: {
-    id: 3, nome: 'Labaredor', tipos: ['Fogo', 'Lutador'], base: b(78, 104, 75, 100, 75, 98), captura: 45, xpBase: 240,
+    id: 3, nome: 'Ignarco', tipos: ['Fogo', 'Lutador'], base: b(78, 104, 75, 100, 75, 98), captura: 45, xpBase: 240,
     golpes: [[1, 'presaflama'], [1, 'chute'], [28, 'labareda'], [34, 'supersoco'], [40, 'erupcao'], [46, 'impacto']],
     cat: 'Fera Vulcão',
     texto: 'Fica de pé quando luta a sério. Seus punhos queimam a mais de mil graus.',
     look: { corpo: 'bipede', c1: '#b83020', c2: '#f8c080', c3: '#f8e048', tam: 1, detalhes: ['chamas', 'punhos', 'espinhos'], olho: 'bravo' },
   },
   pingolim: {
-    id: 4, nome: 'Pingolim', tipos: ['Água'], base: b(44, 48, 65, 50, 64, 43), captura: 45, xpBase: 63,
+    id: 4, nome: 'Gotim', tipos: ['Água'], base: b(44, 48, 65, 50, 64, 43), captura: 45, xpBase: 63,
     golpes: [[1, 'investida'], [1, 'rosnado'], [7, 'bolhas'], [10, 'casco'], [13, 'jatodagua'], [18, 'mordida'], [22, 'pulsoagua'], [29, 'maremoto'], [38, 'hidrocanhao']],
     evolui: { nivel: 16, para: 'marolhao' }, cat: 'Fera Gota',
     texto: 'Vive em lagos limpos. Quando assustado, esguicha água pela boca e foge rolando.',
     look: { corpo: 'redondo', c1: '#58a8e8', c2: '#d8f0f8', c3: '#3878c8', tam: 0.72, detalhes: ['barbatana'], olho: 'fofo' },
   },
   marolhao: {
-    id: 5, nome: 'Marolhão', tipos: ['Água'], base: b(64, 66, 82, 68, 78, 58), captura: 45, xpBase: 142,
+    id: 5, nome: 'Ondarel', tipos: ['Água'], base: b(64, 66, 82, 68, 78, 58), captura: 45, xpBase: 142,
     golpes: [[1, 'investida'], [1, 'bolhas'], [13, 'jatodagua'], [18, 'mordida'], [22, 'pulsoagua'], [29, 'maremoto'], [33, 'chuvaacida'], [38, 'hidrocanhao']],
     evolui: { nivel: 34, para: 'abissal' }, cat: 'Fera Maré',
     texto: 'Consegue criar pequenas ondas batendo a cauda. Pescadores dizem que ele avisa quando vem tempestade.',
     look: { corpo: 'quadrupede', c1: '#3888d8', c2: '#c8e8f8', c3: '#f8f8f8', tam: 0.9, detalhes: ['barbatana', 'crista', 'cauda'], olho: 'bravo' },
   },
   abissal: {
-    id: 6, nome: 'Abissal', tipos: ['Água', 'Terra'], base: b(95, 100, 100, 85, 90, 60), captura: 45, xpBase: 240,
+    id: 6, nome: 'Abismor', tipos: ['Água', 'Terra'], base: b(95, 100, 100, 85, 90, 60), captura: 45, xpBase: 240,
     golpes: [[1, 'cachoeira'], [1, 'lama'], [29, 'maremoto'], [34, 'terremoto'], [40, 'hidrocanhao']],
     cat: 'Fera Abismo',
     texto: 'Vive no fundo de lagos escuros. Um golpe de sua cauda faz a terra tremer.',
     look: { corpo: 'quadrupede', c1: '#285898', c2: '#a8d0e8', c3: '#e8c858', tam: 1, detalhes: ['barbatana', 'espinhos', 'cauda'], olho: 'bravo' },
   },
   folhito: {
-    id: 7, nome: 'Folhito', tipos: ['Planta'], base: b(45, 49, 49, 65, 65, 45), captura: 45, xpBase: 64,
+    id: 7, nome: 'Brotin', tipos: ['Planta'], base: b(45, 49, 49, 65, 65, 45), captura: 45, xpBase: 64,
     golpes: [[1, 'investida'], [1, 'rosnado'], [7, 'absorver'], [10, 'chicote'], [13, 'posono'], [17, 'folhanavalha'], [22, 'megadreno'], [27, 'sintese'], [31, 'rajadafolhas'], [40, 'raiosolar']],
     evolui: { nivel: 16, para: 'bosquerel' }, cat: 'Fera Broto',
     texto: 'A folha em sua cabeça se vira sozinha na direção do sol. Gosta de tomar chuva.',
     look: { corpo: 'quadrupede', c1: '#78c858', c2: '#e0f0b8', c3: '#3a9a48', tam: 0.7, detalhes: ['folhas'], olho: 'fofo' },
   },
   bosquerel: {
-    id: 8, nome: 'Bosquerel', tipos: ['Planta'], base: b(62, 66, 70, 82, 80, 62), captura: 45, xpBase: 142,
+    id: 8, nome: 'Ramagal', tipos: ['Planta'], base: b(62, 66, 70, 82, 80, 62), captura: 45, xpBase: 142,
     golpes: [[1, 'investida'], [1, 'absorver'], [10, 'chicote'], [13, 'posono'], [17, 'folhanavalha'], [22, 'megadreno'], [27, 'sintese'], [31, 'rajadafolhas'], [40, 'raiosolar']],
     evolui: { nivel: 34, para: 'silvarca' }, cat: 'Fera Bosque',
     texto: 'Pequenas plantas crescem nas costas dele. Dizem que florestas inteiras nasceram por onde ele dormiu.',
@@ -151,7 +151,7 @@ export const SPECIES: Record<string, Species> = {
     look: { corpo: 'quadrupede', c1: '#8a8a98', c2: '#e8e8f0', c3: '#f8d050', tam: 0.62, detalhes: ['orelhas', 'cauda'], olho: 'fofo' },
   },
   felinao: {
-    id: 17, nome: 'Felinão', tipos: ['Normal'], base: b(70, 85, 60, 60, 65, 110), captura: 90, xpBase: 150,
+    id: 17, nome: 'Felumbra', tipos: ['Normal'], base: b(70, 85, 60, 60, 65, 110), captura: 90, xpBase: 150,
     golpes: [[1, 'arranhao'], [1, 'mordida'], [16, 'corte'], [22, 'agilidade'], [28, 'garrasombra'], [34, 'dancaespada'], [40, 'pisotear']],
     cat: 'Fera Felino',
     texto: 'Caçador silencioso. A joia na testa brilha quando sente o perigo se aproximar.',
@@ -167,7 +167,7 @@ export const SPECIES: Record<string, Species> = {
     look: { corpo: 'redondo', c1: '#58c8e8', c2: '#f0fcff', c3: '#f8e048', tam: 0.62, detalhes: ['antenas', 'cauda'], olho: 'fofo' },
   },
   voltorrao: {
-    id: 19, nome: 'Voltorrão', tipos: ['Elétrico'], base: b(65, 75, 60, 100, 75, 115), captura: 60, xpBase: 180,
+    id: 19, nome: 'Trovalhão', tipos: ['Elétrico'], base: b(65, 75, 60, 100, 75, 115), captura: 60, xpBase: 180,
     golpes: [[1, 'choque'], [1, 'faisca'], [21, 'agilidade'], [26, 'relampago'], [32, 'carga'], [38, 'trovao']],
     cat: 'Fera Tempestade',
     texto: 'Acumula tanta energia que ilumina uma cidade inteira por uma noite. Corre como um raio.',
@@ -204,21 +204,21 @@ export const SPECIES: Record<string, Species> = {
 
   // ===== bosque / caverna =====
   cogumelinho: {
-    id: 24, nome: 'Cogumelinho', tipos: ['Planta', 'Venenoso'], base: b(50, 55, 60, 50, 60, 30), captura: 190, xpBase: 65,
+    id: 24, nome: 'Cogumino', tipos: ['Planta', 'Venenoso'], base: b(50, 55, 60, 50, 60, 30), captura: 190, xpBase: 65,
     golpes: [[1, 'absorver'], [1, 'povenenoso'], [8, 'ferroadavenenosa'], [13, 'esporo'], [18, 'megadreno'], [24, 'acido'], [30, 'bombalodo']],
     evolui: { nivel: 24, para: 'fungao' }, cat: 'Fera Cogumelo',
     texto: 'Vive em florestas úmidas. O chapéu solta esporos que dão sono quando ele espirra.',
     look: { corpo: 'redondo', c1: '#f0e0c8', c2: '#fff8f0', c3: '#d84848', tam: 0.6, detalhes: ['chapeu'], olho: 'fofo' },
   },
   fungao: {
-    id: 25, nome: 'Fungão', tipos: ['Planta', 'Venenoso'], base: b(75, 80, 85, 75, 85, 35), captura: 75, xpBase: 160,
+    id: 25, nome: 'Fungaral', tipos: ['Planta', 'Venenoso'], base: b(75, 80, 85, 75, 85, 35), captura: 75, xpBase: 160,
     golpes: [[1, 'absorver'], [1, 'esporo'], [18, 'megadreno'], [24, 'acido'], [30, 'bombalodo'], [36, 'raiosolar']],
     cat: 'Fera Fungo',
     texto: 'O chapéu enorme cobre um corpo frágil. Dizem que é uma colônia inteira de cogumelos vivos.',
     look: { corpo: 'bipede', c1: '#e8d8c0', c2: '#fff8f0', c3: '#a83878', tam: 0.95, detalhes: ['chapeu'], olho: 'normal' },
   },
   besourao: {
-    id: 26, nome: 'Besourão', tipos: ['Inseto', 'Lutador'], base: b(80, 115, 85, 40, 70, 75), captura: 45, xpBase: 175,
+    id: 26, nome: 'Escarabruto', tipos: ['Inseto', 'Lutador'], base: b(80, 115, 85, 40, 70, 75), captura: 45, xpBase: 175,
     golpes: [[1, 'investida'], [1, 'carate'], [10, 'picada'], [16, 'focototal'], [22, 'tesourax'], [28, 'supersoco'], [34, 'chifrada']],
     cat: 'Fera Besouro',
     texto: 'Raro e muito forte. Consegue levantar cem vezes o próprio peso com o chifre.',
@@ -267,7 +267,7 @@ export const SPECIES: Record<string, Species> = {
     look: { corpo: 'redondo', c1: '#3c4888', c2: '#a8a8d8', c3: '#e85878', tam: 0.85, detalhes: ['asasMorcego', 'orelhas', 'presas'], olho: 'bravo' },
   },
   lavazinho: {
-    id: 33, nome: 'Lavazinho', tipos: ['Fogo', 'Pedra'], base: b(50, 60, 70, 60, 50, 40), captura: 150, xpBase: 72,
+    id: 33, nome: 'Magmito', tipos: ['Fogo', 'Pedra'], base: b(50, 60, 70, 60, 50, 40), captura: 150, xpBase: 72,
     golpes: [[1, 'investida'], [1, 'brasa'], [9, 'lancapedras'], [15, 'fumaca'], [21, 'rodafogo'], [27, 'tumbapedra'], [33, 'labareda']],
     evolui: { nivel: 30, para: 'vulcanor' }, cat: 'Fera Magma',
     texto: 'Uma pedra que nunca esfria. Gosta de se esconder dentro de crateras borbulhantes.',

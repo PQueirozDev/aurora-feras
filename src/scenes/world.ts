@@ -6,12 +6,13 @@ import { makeCanvas } from '../gfx/pixel';
 import { paintTile, SOLID, TS, ANIMATED, tallGrassOverlay } from '../gfx/tiles';
 import { personSprites, capsuleSprite, LOOKS, type Dir, type PersonSprites } from '../gfx/people';
 import { MAPS, type MapDef, type NPC, type TrainerDef, type WorldAPI, type NpcRef } from '../data/maps';
-import { S, addItem, marcarCapturado } from '../game/state';
+import { S, addItem, marcarCapturado, autoSalvar, ultimoAutoSave } from '../game/state';
 import { criarMon, curarTotal, nomeDe } from '../game/mon';
 import { item } from '../data/items';
 import { say, ask, choose, fadeOut, fadeIn } from '../game/game';
 import { fmt } from './dialog';
 import { box } from '../ui/draw';
+import { isEN, L, nomeItem } from '../i18n';
 import { creatureSprites } from '../gfx/creatures';
 import { CreditsScene } from './credits';
 
@@ -118,6 +119,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     S.mapa = id; S.x = x; S.y = y; S.dir = dir;
     if (this.map.cidade) S.flags['visit_' + id] = true;
     audio.music(this.map.musica);
+    if (this.map.cidade) autoSalvar();
     this.namePopup = this.map.interior ? 0 : 120;
   }
 
@@ -244,7 +246,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     // grama alta
     if (S.repelente && S.repelente > 0) {
       S.repelente--;
-      if (S.repelente === 0) { this.busy = true; await say('O efeito do repelente acabou.'); this.busy = false; }
+      if (S.repelente === 0) { this.busy = true; await say(L('O efeito do repelente acabou.', 'The repel wore off.')); this.busy = false; }
     }
     if (ch === '"' || (this.map.caverna && ch === ':')) {
       if (ch === '"') audio.sfx('grass');
@@ -297,14 +299,14 @@ export class WorldScene extends Scene<void> implements WorldAPI {
 
   private async afterBattle(res: 'win' | 'lose' | 'run' | 'caught', podePerder: boolean) {
     if (res === 'lose' && !podePerder) {
-      await say('{nome} não tem mais feras em condições de lutar!', '{nome} desmaiou e foi levado para um lugar seguro...');
+      await say(L('{nome} não tem mais feras em condições de lutar!', '{nome} has no beasts left that can battle!'), L('{nome} desmaiou e foi levado para um lugar seguro...', '{nome} blacked out and was taken somewhere safe...'));
       await fadeOut(30);
       S.dinheiro = Math.floor(S.dinheiro / 2);
       S.equipe.forEach(curarTotal);
       const u = S.ultimaCura;
       this.loadMap(u.mapa, u.x, u.y, 'up');
       await fadeIn(30);
-      await say('Suas feras foram curadas. Tome mais cuidado da próxima vez!');
+      await say(L('Suas feras foram curadas. Tome mais cuidado da próxima vez!', 'Your beasts were healed. Be more careful next time!'));
     } else if (res === 'lose') {
       S.equipe.forEach(curarTotal);
       audio.music(this.map.musica);
@@ -337,14 +339,14 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     }
     if (ch === 'p') {
       this.busy = true;
-      await say('{nome} ligou o computador.');
+      await say(L('{nome} ligou o computador.', '{nome} turned on the PC.'));
       await this.pc();
       this.busy = false;
       return;
     }
-    if (ch === 'b') { this.busy = true; await say('Está cheio de livros sobre feras.'); this.busy = false; return; }
-    if (ch === 'v') { this.busy = true; await say('Está passando um programa sobre treinadores famosos de Aurora!'); this.busy = false; return; }
-    if (ch === 'h') { this.busy = true; await say('Uma máquina que cura feras.'); this.busy = false; return; }
+    if (ch === 'b') { this.busy = true; await say(L('Está cheio de livros sobre feras.', 'It is full of books about beasts.')); this.busy = false; return; }
+    if (ch === 'v') { this.busy = true; await say(L('Está passando um programa sobre treinadores famosos de Aurora!', 'A show about famous Aurora trainers is on!')); this.busy = false; return; }
+    if (ch === 'h') { this.busy = true; await say(L('Uma máquina que cura feras.', 'A machine that heals beasts.')); this.busy = false; return; }
   }
 
   // ---------------- loop ----------------
@@ -494,6 +496,14 @@ export class WorldScene extends Scene<void> implements WorldAPI {
         ctx.fillStyle = '#e04848'; ctx.fillRect(sx + 7, sy + 1, 2, 6); ctx.fillRect(sx + 7, sy + 8, 2, 2);
       }
     }
+    // ícone de salvamento automático
+    const desde = performance.now() - ultimoAutoSave;
+    if (ultimoAutoSave && desde < 1800) {
+      ctx.globalAlpha = desde > 1300 ? (1800 - desde) / 500 : 1;
+      box(W - 58, H - 20, 56, 18);
+      text(isEN() ? 'saving...' : 'salvando...', W - 30, H - 16, { size: 8, align: 'center', shadow: null });
+      ctx.globalAlpha = 1;
+    }
     // nome do mapa
     if (this.namePopup > 0) {
       const nome = fmt(this.map.nome);
@@ -549,7 +559,7 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     }
     const res = await WorldScene.hooks.battleTrainer!(t, opts.musica);
     const won = res === 'win';
-    if (won) S.flags[t.flag] = true;
+    if (won) { S.flags[t.flag] = true; autoSalvar(); }
     await this.afterBattle(res, !!opts.podePerder);
     return won;
   }
@@ -560,23 +570,24 @@ export class WorldScene extends Scene<void> implements WorldAPI {
     if (S.equipe.length < 6) {
       S.equipe.push(m);
       await audio.jingle('captura');
-      await say(`{nome} recebeu ${nomeDe(m)}!`);
+      await say(L(`{nome} recebeu ${nomeDe(m)}!`, `{nome} received ${nomeDe(m)}!`));
     } else {
       S.caixa.push(m);
       await audio.jingle('captura');
-      await say(`{nome} recebeu ${nomeDe(m)}!`, `A equipe está cheia. ${nomeDe(m)} foi enviado para o computador.`);
+      await say(L(`{nome} recebeu ${nomeDe(m)}!`, `{nome} received ${nomeDe(m)}!`), L(`A equipe está cheia. ${nomeDe(m)} foi enviado para o computador.`, `Your team is full. ${nomeDe(m)} was sent to the PC.`));
     }
     return true;
   }
   async giveItem(id: string, n = 1) {
     addItem(id, n);
     audio.sfx('heal');
-    await say(`{nome} obteve ${n > 1 ? n + 'x ' : ''}${item(id).nome}!`);
+    await say(L(`{nome} obteve ${n > 1 ? n + 'x ' : ''}${nomeItem(id)}!`, `{nome} got ${n > 1 ? n + 'x ' : ''}${nomeItem(id)}!`));
   }
   async heal() {
     S.equipe.forEach(curarTotal);
     S.ultimaCura = { mapa: this.mapId, x: this.player.x, y: this.player.y };
     await audio.jingle('cura');
+    autoSalvar();
   }
   shop(stock: string[]) { return WorldScene.hooks.shop!(stock); }
   pc() { return WorldScene.hooks.pc!(); }

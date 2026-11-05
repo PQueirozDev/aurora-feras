@@ -6,15 +6,18 @@ import { input } from './engine/input';
 import { audio } from './engine/audio';
 import { stack, tickWaiters } from './engine/scene';
 import { drawBlackout } from './game/game';
-import { S, setState, novoEstado } from './game/state';
+import { S, setState, novoEstado, carregarConfig, autoSalvar } from './game/state';
 import { criarMon } from './game/mon';
 import * as worldMod from './scenes/world';
 import { WorldScene, world } from './scenes/world';
 import { startWildBattle, startTrainerBattle } from './scenes/battle';
 import { openStartMenu, openShop, openPC } from './scenes/menus';
 import { TitleScene } from './scenes/title';
+import { ask } from './game/game';
+import { L } from './i18n';
 
 async function boot() {
+  carregarConfig();
   initScreen();
   input.init();
   input.onAnyPress = () => audio.unlock();
@@ -37,6 +40,32 @@ async function boot() {
   };
 
   stack.push(new TitleScene());
+
+  // salva sozinho quando o app vai para o segundo plano (celular) ou a janela fecha
+  const salvarAoSair = () => { if (world && stack.scenes.includes(world)) autoSalvar(); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) salvarAoSair(); });
+  window.addEventListener('pagehide', salvarAoSair);
+
+  // botão "voltar" do Android: funciona como o botão B; no mapa, pergunta se quer sair
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  if (cap?.isNativePlatform?.()) {
+    const { App } = await import('@capacitor/app');
+    let perguntando = false;
+    App.addListener('backButton', async () => {
+      const topo = stack.top();
+      if (topo instanceof TitleScene) { App.exitApp(); return; }
+      if (world && topo === world && !world.busy && !perguntando) {
+        perguntando = true;
+        world.busy = true;
+        const sair = await ask(L('Salvar e sair do jogo?', 'Save and quit the game?'));
+        world.busy = false;
+        perguntando = false;
+        if (sair) { autoSalvar(); App.exitApp(); }
+        return;
+      }
+      input.virtualPress('b');
+    });
+  }
 
   // ganchos de depuração (só no modo de desenvolvimento)
   if (import.meta.env.DEV) {

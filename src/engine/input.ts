@@ -125,6 +125,8 @@ class InputManager {
     if (this.pad.size && [...this.pad].some((b) => !this.prev.has(b))) this.onAnyPress?.();
   }
 
+  /** simula um toque rápido num botão (ex.: botão voltar do Android) */
+  virtualPress(b: Btn) { this.latch.add(b); }
   held(b: Btn) { return this.cur.has(b); }
   pressed(b: Btn) { return this.cur.has(b) && !this.prev.has(b); }
   /** pressionado com repetição automática (menus) */

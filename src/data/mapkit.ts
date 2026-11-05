@@ -128,7 +128,7 @@ export function rivalEquipe(inicial: string | undefined, fase: number): [string,
   switch (fase) {
     case 1: return [['piui', 9], ['gatuno', 9], [linha[0], 11]];
     case 2: return [['ventor', 26], ['felinao', 27], ['zapito', 26], [linha[1], 29]];
-    case 3: return [['ventor', 43], ['felinao', 43], ['voltorrao', 44], ['vulcanor', 44], ['oraculum', 45], [linha[2], 47]];
+    case 3: return [['ventor', 40], ['felinao', 40], ['voltorrao', 41], ['vulcanor', 41], ['oraculum', 42], [linha[2], 44]];
     default: return [[linha[0], 5]];
   }
 }

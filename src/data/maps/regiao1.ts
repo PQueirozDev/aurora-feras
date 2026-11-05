@@ -2,9 +2,9 @@ import type { Dir } from '../../gfx/people';
 import { type MapDef, type NPC, itemNoChao, treinador, npc, andarilho, casa, centro, loja, estoquePadrao, rivalEquipe } from '../mapkit';
 
 const INICIAIS: Record<string, { rival: string; desc: string; nome: string }> = {
-  brasilho: { rival: 'pingolim', desc: 'Brasilho, a fera de FOGO', nome: 'Brasilho' },
-  pingolim: { rival: 'folhito', desc: 'Pingolim, a fera de ÁGUA', nome: 'Pingolim' },
-  folhito: { rival: 'brasilho', desc: 'Folhito, a fera de PLANTA', nome: 'Folhito' },
+  brasilho: { rival: 'pingolim', desc: 'Fagulin, a fera de FOGO', nome: 'Fagulin' },
+  pingolim: { rival: 'folhito', desc: 'Gotim, a fera de ÁGUA', nome: 'Gotim' },
+  folhito: { rival: 'brasilho', desc: 'Brotin, a fera de PLANTA', nome: 'Brotin' },
 };
 
 function capsulaInicial(sp: string, x: number): NPC {

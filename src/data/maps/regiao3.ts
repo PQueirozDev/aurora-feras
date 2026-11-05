@@ -537,12 +537,12 @@ export const REGIAO3: Record<string, MapDef> = {
 
   elite1: salaLiga('elite1', 'SALA DE TITO', { to: 'liga_lobby', tx: 6, ty: 2 }, { to: 'elite2', tx: 5, ty: 9 },
     eliteNPC('tito', 'tito', ['Tito: Bem-vindo à Liga Aurora! Sou Tito, da Elite.', 'Tito: Meus punhos derrubaram centenas de desafiantes. Você será o próximo!'],
-      { classe: 'Elite', nome: 'Tito', equipe: [['punhoforte', 40], ['besourao', 40], ['labaredor', 41], ['punhoforte', 42]], premio: 5000, chefe: true, derrota: 'Tito: Que força! Você merece seguir em frente.' },
+      { classe: 'Elite', nome: 'Tito', equipe: [['punhoforte', 37], ['besourao', 37], ['labaredor', 38], ['punhoforte', 39]], premio: 5000, chefe: true, derrota: 'Tito: Que força! Você merece seguir em frente.' },
       'Tito: Siga em frente. A Elite Íris espera por você na próxima sala.')),
 
   elite2: salaLiga('elite2', 'SALA DE ÍRIS', { to: 'elite1', tx: 5, ty: 2 }, { to: 'campeao', tx: 5, ty: 9 },
     eliteNPC('iris', 'iris', ['Íris: Eu já sabia que você venceria o Tito. Eu leio mentes, sabia?', 'Íris: Mas o que vai acontecer agora... nem eu consigo prever.'],
-      { classe: 'Elite', nome: 'Íris', equipe: [['oraculum', 42], ['mariluz', 41], ['assombrao', 42], ['oraculum', 44]], premio: 5500, chefe: true, derrota: 'Íris: Minha visão falhou. O futuro é seu.' },
+      { classe: 'Elite', nome: 'Íris', equipe: [['oraculum', 38], ['mariluz', 38], ['assombrao', 39], ['oraculum', 41]], premio: 5500, chefe: true, derrota: 'Íris: Minha visão falhou. O futuro é seu.' },
       'Íris: O Campeão está na sala seguinte. Acho que você já sabe quem é...')),
 
   campeao: salaLiga('campeao', 'SALA DO CAMPEÃO', { to: 'elite2', tx: 5, ty: 2 }, null, (beaten) => beaten ? [] : [{
