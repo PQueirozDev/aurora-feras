@@ -428,7 +428,7 @@ export class BattleScene extends Scene<BattleResult> {
       const dir = s === 'p' ? 1 : -1;
       await this.frames(10, (i) => (this.off[s] = [dir * (i < 5 ? i * 2 : (10 - i) * 2), 0]));
       this.off[s] = [0, 0];
-      const eff = efetividade(mv.tipo, species(D.m).tipos);
+      const eff = mv === STRUGGLE ? 1 : efetividade(mv.tipo, species(D.m).tipos);
       if (eff === 0) { await this.msg(`Não afeta ${dn}...`); return undefined; }
       const [fxX, fxY] = this.centro(ds);
       await this.frames(this.fx.golpe(mv.tipo, fxX, fxY));
