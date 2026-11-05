@@ -1,7 +1,7 @@
 {
   "name": "aurora-feras",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Aurora: Caçadores de Feras — RPG de captura de criaturas original",
   "type": "module",
   "main": "electron/main.cjs",

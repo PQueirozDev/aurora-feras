@@ -59,8 +59,8 @@ const CFG_KEY = 'aurora-feras-config';
 export let slotAtual = 1;
 export function setSlot(n: number) { slotAtual = n; }
 
-export type Config = { idioma: 'pt' | 'en'; texto: 'normal' | 'rapido'; autosave: boolean; ultimoSlot: number };
-export let CFG: Config = { idioma: 'pt', texto: 'normal', autosave: true, ultimoSlot: 1 };
+export type Config = { idioma: 'pt' | 'en'; texto: 'normal' | 'rapido'; autosave: boolean; som: boolean; ultimoSlot: number };
+export let CFG: Config = { idioma: 'pt', texto: 'normal', autosave: true, som: true, ultimoSlot: 1 };
 export function carregarConfig() {
   try { CFG = { ...CFG, ...JSON.parse(localStorage.getItem(CFG_KEY) ?? '{}') }; } catch { /* padrão */ }
   // migra o save antigo (versão sem espaços) para o espaço 1

@@ -6,7 +6,7 @@ import { input } from './engine/input';
 import { audio } from './engine/audio';
 import { stack, tickWaiters } from './engine/scene';
 import { drawBlackout } from './game/game';
-import { S, setState, novoEstado, carregarConfig, autoSalvar } from './game/state';
+import { S, setState, novoEstado, carregarConfig, autoSalvar, CFG } from './game/state';
 import { criarMon } from './game/mon';
 import * as worldMod from './scenes/world';
 import { WorldScene, world } from './scenes/world';
@@ -18,6 +18,7 @@ import { L } from './i18n';
 
 async function boot() {
   carregarConfig();
+  audio.setEnabled(CFG.som);
   initScreen();
   input.init();
   input.onAnyPress = () => audio.unlock();

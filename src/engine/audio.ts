@@ -91,8 +91,8 @@ const JINGLES: Record<string, Track> = {
     { wave: 'triangle', vol: 0.12, notes: 'C3 - - - G3 - - - C3 - - - G3 - - - C4 - - - - - . .' }] },
 };
 
-/** som desligado por pedido do usuário — mude para false para reativar */
-export const SOM_DESATIVADO = true;
+/** desliga todo o áudio (true) — o jogador também pode silenciar em OPÇÕES > SOM */
+export const SOM_DESATIVADO = false;
 
 class AudioManager {
   ctx: AudioContext | null = null;

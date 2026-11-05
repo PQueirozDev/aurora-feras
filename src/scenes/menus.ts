@@ -523,6 +523,7 @@ export async function openOptions() {
       `${L('IDIOMA', 'LANGUAGE')}: ${CFG.idioma === 'en' ? 'ENGLISH' : 'PORTUGUÊS'}`,
       `${L('TEXTO', 'TEXT')}: ${CFG.texto === 'rapido' ? L('RÁPIDO', 'FAST') : 'NORMAL'}`,
       `${L('SALVAR SOZINHO', 'AUTOSAVE')}: ${CFG.autosave ? sim : nao}`,
+      `${L('SOM', 'SOUND')}: ${CFG.som ? sim : nao}`,
       `${L('TELA CHEIA', 'FULLSCREEN')}: ${fs ? sim : nao}`,
       L('CONTROLES', 'CONTROLS'),
       L('VOLTAR', 'BACK'),
@@ -530,12 +531,13 @@ export async function openOptions() {
     if (r === 0) { CFG.idioma = CFG.idioma === 'en' ? 'pt' : 'en'; salvarConfig(); continue; }
     if (r === 1) { CFG.texto = CFG.texto === 'rapido' ? 'normal' : 'rapido'; salvarConfig(); continue; }
     if (r === 2) { CFG.autosave = !CFG.autosave; salvarConfig(); continue; }
-    if (r === 3) {
+    if (r === 3) { CFG.som = !CFG.som; salvarConfig(); audio.setEnabled(CFG.som); if (CFG.som) audio.sfx('blip'); continue; }
+    if (r === 4) {
       try { if (fs) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
       catch { await say(L('Não foi possível mudar para tela cheia.', 'Could not switch to fullscreen.')); }
       continue;
     }
-    if (r === 4) {
+    if (r === 5) {
       await say(
         L('Teclado: setas para andar, Z para confirmar, X para voltar (segure para correr), Enter para o menu.', 'Keyboard: arrows to move, Z to confirm, X to go back (hold to run), Enter for the menu.'),
         L('Controle: direcional para andar, A confirma, B volta, Start abre o menu. No celular, use os botões na tela.', 'Gamepad: D-pad to move, A confirms, B goes back, Start opens the menu. On phones, use the on-screen buttons.'),
